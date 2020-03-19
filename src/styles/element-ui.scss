@@ -47,3 +47,7 @@
 .el-range-separator {
   box-sizing: content-box;
 }
+
+.el-button+.el-button {
+  margin-left: 5px;
+}

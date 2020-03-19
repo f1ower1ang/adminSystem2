@@ -10,7 +10,7 @@ localVue.use(ElementUI)
 const routes = [
   {
     path: '/',
-    name: 'home',
+    name: 'dashboard',
     children: [{
       path: 'dashboard',
       name: 'dashboard'

@@ -1,24 +1,24 @@
 import request from '@/utils/request'
+import path from '@/assets/js/path'
 
 export function login(data) {
   return request({
-    url: '/vue-admin-template/user/login',
+    url: path.user.login,
     method: 'post',
     data
   })
 }
 
-export function getInfo(token) {
+export function getInfo() {
   return request({
-    url: '/vue-admin-template/user/info',
-    method: 'get',
-    params: { token }
+    url: path.user.info,
+    method: 'get'
   })
 }
 
 export function logout() {
   return request({
-    url: '/vue-admin-template/user/logout',
+    url: path.user.logout,
     method: 'post'
   })
 }

@@ -1,3 +1,4 @@
+import path from '../src/assets/js/path'
 
 const tokens = {
   admin: {
@@ -26,7 +27,7 @@ const users = {
 export default [
   // user login
   {
-    url: '/vue-admin-template/user/login',
+    url: path.user.login,
     type: 'post',
     response: config => {
       const { username } = config.body
@@ -41,7 +42,7 @@ export default [
       }
 
       return {
-        code: 20000,
+        code: 0,
         data: token
       }
     }
@@ -49,10 +50,10 @@ export default [
 
   // get user info
   {
-    url: '/vue-admin-template/user/info\.*',
+    url: path.user.info,
     type: 'get',
     response: config => {
-      const { token } = config.query
+      const token = config.headers['x-token']
       const info = users[token]
 
       // mock error
@@ -64,7 +65,7 @@ export default [
       }
 
       return {
-        code: 20000,
+        code: 0,
         data: info
       }
     }
@@ -72,11 +73,11 @@ export default [
 
   // user logout
   {
-    url: '/vue-admin-template/user/logout',
+    url: path.user.logout,
     type: 'post',
     response: _ => {
       return {
-        code: 20000,
+        code: 0,
         data: 'success'
       }
     }
