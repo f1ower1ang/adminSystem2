@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   user: {
     login: '/user/login',
     logout: '/user/logout',

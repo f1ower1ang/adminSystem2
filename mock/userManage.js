@@ -1,6 +1,6 @@
-import path from '../src/assets/js/path'
+const path = require('../src/assets/js/path')
 
-export default [
+module.exports = [
   {
     url: path.userManage.accountManage,
     type: 'post',

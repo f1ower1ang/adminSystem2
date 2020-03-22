@@ -1,4 +1,4 @@
-import path from '../src/assets/js/path'
+const path = require('../src/assets/js/path')
 
 const tokens = {
   admin: {
@@ -24,7 +24,7 @@ const users = {
   }
 }
 
-export default [
+module.exports = [
   // user login
   {
     url: path.user.login,
