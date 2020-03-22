@@ -5,12 +5,16 @@ import user from './user'
 import dashboard from './dashboard'
 import emailManage from './emailManage'
 import emailTrace from './emailTrace'
+import ruleManage from './ruleManage'
+import userManage from "./userManage"
 
 const mocks = [
   ...user,
   ...dashboard,
   ...emailManage,
-  ...emailTrace
+  ...emailTrace,
+  ...ruleManage,
+  ...userManage
 ]
 
 // for front mock

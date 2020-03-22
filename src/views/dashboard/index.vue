@@ -21,7 +21,7 @@
     </el-card>
     <el-card class="dashboard-page__content">
       <div slot="header">
-        最近溯源
+        最近分析
       </div>
       <el-table :data="tableData">
         <el-table-column

@@ -1,6 +1,6 @@
 module.exports = {
 
-  title: '邮件追溯系统',
+  title: '邮件同源性分析系统',
 
   /**
    * @type {boolean} true | false

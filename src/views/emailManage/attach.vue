@@ -42,7 +42,7 @@
             :width="widths[index]"
             :show-overflow-tooltip="true"
           />
-          <el-table-column label="操作" width="250" align="center">
+          <el-table-column label="操作" width="200" align="center">
             <template slot-scope="{ row }">
               <el-button type="primary" size="mini">下载</el-button>
               <el-button type="danger" icon="el-icon-delete" size="mini">删除</el-button>
@@ -72,7 +72,7 @@ export default {
       loading: false,
       tableData: null,
       keys: ['id', 'filename', 'size', 'path', 'hash', 'email'],
-      headers: ['ID', '文件名', '文件大小', '路径', '哈希', '所属文件'],
+      headers: ['ID', '文件名', '文件大小', '路径', '哈希', '所属邮件'],
       widths: ['70', '', '80', '', '', '']
     }
   },

@@ -28,7 +28,7 @@
     <el-card class="email-manage-page__content">
       <div class="option">
         <el-button size="small" type="danger">删除</el-button>
-        <el-button size="small" type="primary">添加</el-button>
+        <el-button size="small" type="primary">统计分析</el-button>
       </div>
       <pagination
         :size="limit"
@@ -47,7 +47,7 @@
           <el-table-column label="操作" width="250" align="center">
             <template slot-scope="{ row }">
               <el-button type="primary" size="mini" @click="check(row)">查看</el-button>
-              <el-button type="primary" icon="el-icon-edit" size="mini">编辑</el-button>
+              <el-button type="primary" size="mini">记录</el-button>
               <el-button type="danger" icon="el-icon-delete" size="mini">删除</el-button>
             </template>
           </el-table-column>
