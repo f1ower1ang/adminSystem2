@@ -4,11 +4,13 @@ import { param2Obj } from '../src/utils'
 import user from './user'
 import dashboard from './dashboard'
 import emailManage from './emailManage'
+import emailTrace from './emailTrace'
 
 const mocks = [
   ...user,
   ...dashboard,
-  ...emailManage
+  ...emailManage,
+  ...emailTrace
 ]
 
 // for front mock

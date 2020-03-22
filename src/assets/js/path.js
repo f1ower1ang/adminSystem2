@@ -8,5 +8,8 @@ export default {
   emailManage: {
     default: '/emailManage',
     attachManage: '/email/attachManage'
+  },
+  emailTrace: {
+    record: '/email/record'
   }
 }

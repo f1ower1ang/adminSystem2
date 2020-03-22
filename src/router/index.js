@@ -74,18 +74,18 @@ export const constantRoutes = [
 
   {
     path: '/emailTrace',
-    meta: { title: '邮件溯源', icon: 'trace' },
+    meta: { title: '同源分析', icon: 'trace' },
     component: Layout,
     children: [{
       path: '',
       name: 'traceOrder',
       component: () => import('@/views/emailTrace/index'),
-      meta: { title: '溯源任务' }
+      meta: { title: '分析任务' }
     }, {
       path: 'record',
       name: 'traceRecord',
       component: () => import('@/views/emailTrace/record'),
-      meta: { title: '溯源记录' }
+      meta: { title: '分析记录' }
     }]
   },
 
@@ -102,12 +102,17 @@ export const constantRoutes = [
       path: 'sourceImport',
       name: 'sourceImport',
       component: () => import('@/views/ruleManage/sourceImport'),
-      meta: { title: '原数据导入' }
+      meta: { title: '源数据导入' }
     }, {
       path: 'groupManage',
       name: 'groupManage',
       component: () => import('@/views/ruleManage/groupManage'),
       meta: { title: '组织管理' }
+    }, {
+      path: 'targetManage',
+      name: 'targetManage',
+      component: () => import('@/views/ruleManage/targetManage'),
+      meta: { title: '受害目标管理' }
     }]
   },
 

@@ -8,3 +8,11 @@ export function emailManage(data) {
     data
   })
 }
+
+export function emailAttach(data) {
+  return request({
+    url: path.emailManage.attachManage,
+    method: 'post',
+    data
+  })
+}
