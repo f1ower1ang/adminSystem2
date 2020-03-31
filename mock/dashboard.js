@@ -1,4 +1,4 @@
-const path = require('../src/assets/js/path')
+const path = require('./path')
 
 module.exports = [
   {
