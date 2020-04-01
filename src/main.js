@@ -1,11 +1,14 @@
 import Vue from 'vue'
 import Pagination from '@/components/Pagination/index'
+import SectionTitle from '@/components/SectionTitle/index'
 
 Vue.component('pagination', Pagination)
+Vue.component('section-title', SectionTitle)
 // import 'normalize.css/normalize.css' // A modern alternative to CSS resets
 
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
+import '../theme/index.css'
 // import locale from 'element-ui/lib/locale/lang/en' // lang i18n
 
 import '@/styles/index.scss' // global css

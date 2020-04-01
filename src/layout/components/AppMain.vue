@@ -17,11 +17,10 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .app-main {
   /*50 = navbar  */
-  min-height: calc(100vh - 84px);
-  width: 100%;
+  min-height: 100%;
   position: relative;
   overflow: hidden;
 }

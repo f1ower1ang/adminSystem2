@@ -1,7 +1,10 @@
 <template>
-  <div :class="{'has-logo':showLogo}">
-    <logo v-if="showLogo" :collapse="isCollapse" />
+  <div>
     <el-scrollbar wrap-class="scrollbar-wrapper">
+      <div class="title" :class="{'is-active': !sidebar.opened}">
+        <p>导航菜单</p>
+        <i class="el-icon-d-arrow-left el-icon" @click="toggleSideBar" />
+      </div>
       <el-menu
         :default-active="activeMenu"
         :collapse="isCollapse"
@@ -20,12 +23,11 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import Logo from './Logo'
 import SidebarItem from './SidebarItem'
 import variables from '@/styles/variables.scss'
 
 export default {
-  components: { SidebarItem, Logo },
+  components: { SidebarItem },
   computed: {
     ...mapGetters([
       'sidebar'
@@ -51,6 +53,40 @@ export default {
     isCollapse() {
       return !this.sidebar.opened
     }
+  },
+  methods: {
+    toggleSideBar() {
+      this.$store.dispatch('app/toggleSideBar')
+    }
   }
 }
 </script>
+
+<style scoped lang="scss">
+  .title {
+    height: 40px;
+    font-size: $font-size-medium-x;
+    color: #15a4ce;
+    padding: 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    .el-icon {
+      color: #567fc1;
+      cursor: pointer;
+      transition: all .3s;
+    }
+    &.is-active {
+      display: block;
+      text-align: center;
+      line-height: 40px;
+      p {
+        display: none;
+      }
+      .el-icon {
+        transform: rotate(180deg);
+      }
+    }
+  }
+</style>

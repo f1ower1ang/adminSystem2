@@ -1,20 +1,25 @@
 #app {
-
+  .container {
+    margin-top: 55px;
+    min-height: calc(100% - 55px) !important;
+    background: $bg-page;
+  }
   .main-container {
-    min-height: 100%;
     transition: margin-left .28s;
     margin-left: $sideBarWidth;
     position: relative;
+    margin-top: 55px;
+    min-height: 100%;
   }
 
   .sidebar-container {
     transition: width 0.28s;
     width: $sideBarWidth !important;
-    background-color: $menuBg;
+    background-color: $bg-page-dark;
     height: 100%;
     position: fixed;
-    font-size: 0px;
-    top: 0;
+    font-size: 0;
+    top: 55px;
     bottom: 0;
     left: 0;
     z-index: 1001;
@@ -54,36 +59,87 @@
     }
 
     .svg-icon {
-      margin-right: 16px;
+      margin-right: 10px;
     }
 
     .el-menu {
       border: none;
       height: 100%;
       width: 100% !important;
+      background-color: $bg-page-dark !important;
+      color: #fff;
+    }
+    .el-menu--collapse {
+      .submenu-title-noDropdown, .el-submenu__title {
+        background-image: none;
+        width: 100% !important;
+        &:hover {
+          background-image: none !important;
+        }
+        &.is-active {
+          background-image: none !important;
+          color: $color-theme !important;
+        }
+      }
+      .submenu-title-noDropdown {
+        text-align: center;
+      }
     }
 
     // menu hover
     .submenu-title-noDropdown,
     .el-submenu__title {
       &:hover {
-        background-color: $menuHover !important;
+        background-image: url("../assets/slices/menu-active@2x.png") !important;
+      }
+    }
+    .submenu-title-noDropdown, .el-submenu__title {
+      background-image: url("../assets/slices/menu@2x.png");
+      background-repeat: no-repeat;
+      background-size: 100%;
+      width: 190px;
+      height: 35px;
+      margin: 15px auto 0;
+      padding: 0 15px !important;
+      background-color: transparent !important;
+      line-height: 35px;
+      color: #fff !important;
+      &.is-active {
+        background-image: url("../assets/slices/menu-active@2x.png") !important;
+        color: #fff !important;
       }
     }
 
     .is-active>.el-submenu__title {
-      color: $subMenuActiveText !important;
+      color: #fff !important;
     }
 
     & .nest-menu .el-submenu>.el-submenu__title,
     & .el-submenu .el-menu-item {
-      min-width: $sideBarWidth !important;
-      background-color: $subMenuBg !important;
+      background-color: transparent !important;
+      width: 170px !important;
+      margin: 10px auto 0;
+      height: 30px;
+      line-height: 30px;
+      padding-left: 40px !important;
+      box-sizing: border-box;
+      background-size: 100%;
+      background-repeat: no-repeat;
+      background-position: center;
+      min-width: 170px !important;
+      color: #fff !important;
 
       &:hover {
-        background-color: $subMenuHover !important;
+        background-image: url("../assets/slices/menu-item-active@2x.png") !important;
+      }
+      &.is-active {
+        background-image: url("../assets/slices/menu-item-active@2x.png") !important;
       }
     }
+  }
+  .el-menu--inline {
+    background-color: $bg-page-dark !important;
+    margin-top: 10px;
   }
 
   .hideSidebar {
@@ -103,7 +159,7 @@
         padding: 0 !important;
 
         .svg-icon {
-          margin-left: 20px;
+          margin-left: 10px;
         }
       }
     }

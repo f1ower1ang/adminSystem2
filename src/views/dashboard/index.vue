@@ -1,29 +1,22 @@
 <template>
   <div class="dashboard-page app-container">
-    <el-card class="dashboard-page__header" :body-style="{display: 'flex', alignItems: 'center', justifyContent: 'center'}">
-      <p slot="header">数据速览</p>
-      <div class="item">
-        <p>数据源</p>
-        <p>{{ dataSource }}</p>
-      </div>
-      <div class="item">
-        <p>规则</p>
-        <p>{{ rule }}</p>
-      </div>
-      <div class="item">
-        <p>组织</p>
-        <p>{{ organise }}</p>
-      </div>
-      <div class="item">
-        <p>溯源记录</p>
-        <p>{{ traceSourceRecord }}</p>
-      </div>
-    </el-card>
+    <section-title more title="数据速览" />
+    <el-row class="dashboard-page__header" :gutter="20">
+      <el-col v-for="(item, index) in headerData" :key="index" :span="6">
+        <el-card>
+          <div class="wrapper">
+            <div :style="{backgroundImage: `url(${item.bg})`}" class="bg" />
+            <div class="item">
+              <p>{{ item.title }}</p>
+              <p>{{ item.data }}</p>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+    <section-title title="最近分析" more />
     <el-card class="dashboard-page__content">
-      <div slot="header">
-        最近分析
-      </div>
-      <el-table :data="tableData">
+      <el-table :data="tableData" class="common-table" stripe>
         <el-table-column
           v-for="(label, index) in headers"
           :key="index"
@@ -47,19 +40,33 @@ export default {
       headers: ['文件名', '发件人', '溯源结果', '添加源数据', '溯源日期'],
       widths: ['', '', '', '100', '150'],
       keys: ['fileName', 'originator', 'result', 'flag', 'date'],
-      dataSource: 0,
-      rule: 0,
-      organise: 0,
-      traceSourceRecord: 0
+      headerData: [
+        {
+          bg: require('../../assets/slices/source-data.png'),
+          title: '源数据',
+          data: 0
+        }, {
+          bg: require('../../assets/slices/analyse-rule.png'),
+          title: '分析规则',
+          data: 0
+        }, {
+          bg: require('../../assets/slices/group.png'),
+          title: '组织',
+          data: 0
+        }, {
+          bg: require('../../assets/slices/analyse-record.png'),
+          title: '分析记录',
+          data: 0
+        }]
     }
   },
   created() {
     systemState().then(res => {
       this.tableData = res.data.dataList
-      this.dataSource = res.data.dataSource
-      this.rule = res.data.rule
-      this.organise = res.data.organise
-      this.traceSourceRecord = res.data.traceSourceRecord
+      const data = [res.data.dataSource, res.data.rule, res.data.organise, res.data.traceSourceRecord]
+      for (let i = 0; i < 4; i++) {
+        this.headerData[i].data = data[i]
+      }
     })
   }
 }
@@ -68,17 +75,25 @@ export default {
 <style lang="scss" scoped>
 .dashboard-page {
   &__header{
+    .bg {
+      display: inline-block;
+      width: 52px;
+      height: 52px;
+      vertical-align: bottom;
+    }
     .item {
-      flex: 1;
-      text-align: center;
+      height: 52px;
+      display: inline-block;
+      font-size: $font-size-medium-x;
+      margin-left: 5px;
       p:first-child {
-        margin-bottom: 10px;
-        color: $color-pl
+        margin: 10px 0 5px;
+        color: $color-pl;
+        font-size: $font-size-medium-s;
       }
     }
   }
   &__content {
-    margin-top: 30px;
   }
 }
 </style>

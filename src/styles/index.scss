@@ -4,9 +4,10 @@
 @import './element-ui.scss';
 @import './sidebar.scss';
 @import './reset.scss';
+@import './util.scss';
 
 body {
-  height: 100%;
+  min-height: 100%;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
