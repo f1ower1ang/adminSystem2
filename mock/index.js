@@ -3,10 +3,10 @@ import { param2Obj } from '../src/utils'
 
 import user from './user'
 import dashboard from './dashboard'
-import emailManage from './emailManage'
-import emailTrace from './emailTrace'
-import ruleManage from './ruleManage'
-import userManage from './userManage'
+import emailManage from './email-manage'
+import emailTrace from './email-trace'
+import ruleManage from './rule-manage'
+import userManage from './user-manage'
 
 const mocks = [
   ...user,

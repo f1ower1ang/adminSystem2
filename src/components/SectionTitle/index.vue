@@ -23,7 +23,7 @@ export default {
   },
   methods: {
     select() {
-      this.$emit('goTo')
+      this.$emit('go-to')
     }
   }
 }

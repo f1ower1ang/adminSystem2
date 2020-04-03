@@ -1,30 +1,31 @@
 <template>
   <div class="permission-manage-page app-container">
-    <el-card class="permission-manage-page__header">
-      <el-form :model="formData" :inline="true">
-        <el-form-item label="用户名">
-          <el-input v-model="formData.username" size="small" placeholder="请输入用户名" />
-        </el-form-item>
-        <el-form-item label="真实姓名">
-          <el-input v-model="formData.realName" size="small" placeholder="请输入真实姓名" />
-        </el-form-item>
-        <el-form-item label="用户电话">
-          <el-input v-model="formData.phone" size="small" placeholder="请输入用户电话" />
-        </el-form-item>
-        <el-form-item label="用户状态">
-          <el-select v-model="formData.status" size="small" placeholder="请选择状态">
-            <el-option label="正常" value="normal" />
-            <el-option label="冻结" value="freeze" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button icon="el-icon-search" type="primary" size="small" />
-        </el-form-item>
+    <section-title title="权限管理" />
+    <div class="permission-manage-page__header">
+      <el-form :model="formData" :inline="true" label-width="75px" class="common-form">
+        <el-row>
+          <el-form-item label="资源名称:">
+            <el-input v-model="formData.name" size="small" placeholder="请输入用户名" />
+          </el-form-item>
+          <el-form-item label="资源URL:">
+            <el-input v-model="formData.url" size="small" placeholder="请输入真实姓名" />
+          </el-form-item>
+          <el-form-item label="资源类型:">
+            <el-select v-model="formData.type" size="small" placeholder="请选择状态">
+              <el-option label="菜单" value="1" />
+              <el-option label="按钮" value="2" />
+              <el-option label="接口" value="3" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="el-icon-search" type="primary" size="small">查询</el-button>
+          </el-form-item>
+        </el-row>
       </el-form>
-    </el-card>
-    <el-card class="permission-manage-page__content">
+    </div>
+    <div class="permission-manage-page__content">
       <div class="option">
-        <el-button size="small" type="danger">删除</el-button>
+        <el-button size="small" type="danger" @click="deleteMorePermission">删除</el-button>
         <el-button size="small" type="primary" @click="showDialog">添加</el-button>
       </div>
       <pagination
@@ -34,7 +35,7 @@
         @select-page="changePage"
         @select-size="changeSize"
       >
-        <el-table v-loading="loading" :data="tableData">
+        <el-table v-loading="loading" :data="tableData" class="common-table" stripe @selection-change="handleSelectionChange">
           <el-table-column
             type="selection"
             width="50"
@@ -42,18 +43,18 @@
           />
           <el-table-column v-for="(label, index) in headers" :key="index" :label="label" :prop="keys[index]" align="center" :show-overflow-tooltip="true" />
           <el-table-column label="操作" align="center" width="200">
-            <template slot-scope="{ row }">
-              <el-button type="primary" icon="el-icon-edit" size="mini" @click="edit(row)">编辑</el-button>
-              <el-button type="danger" icon="el-icon-delete" size="mini" @click="del(row)">删除</el-button>
+            <template slot-scope="{ row, $index }">
+              <el-button type="primary" plain size="mini" @click="edit(row)">编辑</el-button>
+              <el-button type="danger" plain size="mini" @click="deleteOnePermission(row, $index)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </pagination>
-    </el-card>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="100px" width="40%">
+    </div>
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="225px" width="40%" class="common-dialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>添加资源信息</p>
-        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 20px; color: #909399" @click="fullscreen = !fullscreen" />
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px;" @click="fullscreen = !fullscreen" />
       </div>
       <el-form :model="permissionForm" label-width="90px">
         <el-form-item label="上级资源">
@@ -65,7 +66,9 @@
         </el-form-item>
         <el-form-item label="资源类型">
           <el-select v-model="permissionForm.type" size="small" placeholder="请选择上级资源">
-            <el-option label="接口" value="interface" />
+            <el-option label="菜单" value="1" />
+            <el-option label="按钮" value="2" />
+            <el-option label="接口" value="3" />
           </el-select>
         </el-form-item>
         <el-form-item label="资源名称">
@@ -84,21 +87,20 @@
 </template>
 
 <script>
-import { getPermissions } from '../../api/userManage'
+import { deletePermission, deletePermissions, getPermissionList } from '../../api/userManage'
 
 export default {
   name: 'PermissionManage',
   data() {
     return {
       formData: {
-        username: '',
-        realName: '',
-        phone: '',
-        status: ''
+        name: '',
+        type: '',
+        url: ''
       },
       tableData: null,
       headers: ['ID', '资源名称', '资源URL', '上级资源', '资源类型'],
-      keys: ['id', 'name', 'URL', 'parent', 'type'],
+      keys: ['id', 'name', 'url', 'pid', 'type'],
       page: 1,
       limit: 8,
       total: 0,
@@ -110,7 +112,8 @@ export default {
         type: '',
         name: '',
         URL: ''
-      }
+      },
+      selection: []
     }
   },
   created() {
@@ -120,9 +123,9 @@ export default {
     getTableData() {
       this.loading = true
       setTimeout(async() => {
-        const res = await getPermissions({ page: this.page, limit: this.limit })
+        const res = await getPermissionList({ page: this.page, limit: this.limit })
         this.tableData = res.data
-        this.total = res.total
+        this.total = res.count
         this.loading = false
       }, 200)
     },
@@ -134,12 +137,27 @@ export default {
       this.limit = size
       this.getTableData()
     },
+    handleSelectionChange(val) {
+      this.selection = val.map(item => item.id)
+    },
+    deleteMorePermission() {
+      deletePermissions(this.selection).then((res) => {
+        if (res.code === 0) {
+          this.tableData = this.tableData.filter((item) => this.selection.indexOf(item.id) === -1)
+        }
+      })
+    },
     showDialog() {
       this.dialogTableVisible = true
     },
     edit(item) {
     },
-    del(item) {
+    deleteOnePermission(perm, index) {
+      deletePermission(perm.id).then((res) => {
+        if (res.code === 0) {
+          this.tableData.splice(index, 1)
+        }
+      })
     }
   }
 }
@@ -148,7 +166,9 @@ export default {
 <style scoped lang="scss">
 .permission-manage-page {
   &__content {
-    margin-top: 20px
+    .option {
+      margin-bottom: 10px
+    }
   }
   .el-dialog {
     .el-form {

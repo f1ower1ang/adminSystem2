@@ -1,9 +1,10 @@
 import path from '@/assets/js/path'
 import request from '@/utils/request'
 
-export function systemState() {
+export function getStatistic(data) {
   return request({
-    url: path.dashboard,
-    method: 'post'
+    url: path.dashboard.statistic,
+    method: 'post',
+    data
   })
 }

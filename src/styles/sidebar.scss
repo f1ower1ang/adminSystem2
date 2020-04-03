@@ -1,14 +1,12 @@
 #app {
   .container {
     margin-top: 55px;
-    min-height: calc(100% - 55px) !important;
-    background: $bg-page;
+    height: calc(100% - 55px) !important;
   }
   .main-container {
     transition: margin-left .28s;
     margin-left: $sideBarWidth;
     position: relative;
-    margin-top: 55px;
     min-height: 100%;
   }
 

@@ -1,21 +1,24 @@
 <template>
   <div class="source-import-page app-container">
+    <section-title title="源数据导入" />
     <el-radio-group v-model="radio" size="medium">
       <el-radio-button label="0">文件夹</el-radio-button>
       <el-radio-button label="1">表格</el-radio-button>
     </el-radio-group>
-    <el-card class="source-import-page__header">
+    <div class="source-import-page__header">
       <p>选择邮件所在文件夹进行批量上传</p>
       <el-upload
         action="#"
         :on-remove="handleRemove"
         :file-list="fileList"
+        style="display: inline-block"
       >
-        <el-button size="medium" type="primary">选择文件夹</el-button>
+        <el-button size="medium" type="success" icon="el-icon-search">选择文件夹</el-button>
       </el-upload>
-    </el-card>
-    <el-card class="source-import-page__content">
-      <el-table :data="tableData">
+      <el-button size="medium" type="primary" class="btn">开始导入</el-button>
+    </div>
+    <div class="source-import-page__content">
+      <el-table :data="tableData" class="common-table" stripe>
         <el-table-column
           type="selection"
           width="50"
@@ -24,14 +27,11 @@
         <el-table-column v-for="(label, index) in headers" :key="index" :label="label" :prop="keys[index]" align="center" :show-overflow-tooltip="true" />
         <el-table-column label="操作" align="center">
           <template slot-scope="{ row }">
-            <el-button type="danger" size="mini" @click="del(row)">删除</el-button>
+            <el-button type="danger" size="mini" @click="del(row)" plain>删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-      <div class="options">
-        <el-button type="primary" size="medium">开始导入</el-button>
-      </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -61,18 +61,20 @@ export default {
 
 <style scoped lang="scss">
 .source-import-page{
-  &__header, &__content {
-    margin-top: 20px;
+  .el-radio-group {
+    margin: 20px 0;
   }
   &__header {
+    margin-top: 20px;
     p {
       padding-bottom: 20px;
     }
+    .btn {
+      margin-left: 5px;
+    }
   }
   &__content {
-    .options {
-      margin-top: 20px;
-    }
+    margin-top: 30px;
   }
 }
 </style>

@@ -1,24 +1,25 @@
 <template>
   <div class="attach-page app-container">
-    <el-card class="attach-page__header">
-      <el-form :model="formData" :inline="true">
-        <el-form-item label="文件名">
+    <section-title title="附件管理" />
+    <el-form :model="formData" :inline="true" label-width="75px" class="common-form">
+      <el-row>
+        <el-form-item label="文件名:">
           <el-input v-model="formData.filename" size="small" placeholder="请输入邮箱" />
         </el-form-item>
-        <el-form-item label="哈希">
+        <el-form-item label="哈希:">
           <el-input v-model="formData.filename" size="small" placeholder="请输入hash" />
         </el-form-item>
-        <el-form-item label="所属邮件">
+        <el-form-item label="所属邮件:">
           <el-input v-model="formData.filename" size="small" placeholder="请输入所属邮件" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="el-icon-search" size="small" />
+          <el-button icon="el-icon-search" type="success" size="small">查询</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
-    <el-card class="attach-page__content">
+      </el-row>
+    </el-form>
+    <div class="attach-page__content">
       <div class="option">
-        <el-button size="small" type="danger">删除</el-button>
+        <el-button size="small" type="danger" @click="deleteMoreAttachment">删除</el-button>
       </div>
       <pagination
         :size="limit"
@@ -27,7 +28,7 @@
         @select-page="changePage"
         @select-size="changeSize"
       >
-        <el-table v-loading="loading" :data="tableData">
+        <el-table v-loading="loading" :data="tableData" class="common-table" stripe :cell-style="{fontSize: '12px'}" @selection-change="handleSelectionChange">
           <el-table-column
             type="selection"
             width="50"
@@ -43,19 +44,19 @@
             :show-overflow-tooltip="true"
           />
           <el-table-column label="操作" width="200" align="center">
-            <template slot-scope="{ row }">
-              <el-button type="primary" size="mini">下载</el-button>
-              <el-button type="danger" icon="el-icon-delete" size="mini">删除</el-button>
+            <template slot-scope="{ row, $index }">
+              <el-button type="primary" size="mini" plain>下载</el-button>
+              <el-button type="danger" size="mini" @click="deleteOneAttachment(row, $index)" plain>删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </pagination>
-    </el-card>
+    </div>
   </div>
 </template>
 
 <script>
-import { emailAttach } from '../../api/emailManage'
+import { delAttachment, delAttachments, getAttachmentList } from '../../api/emailManage'
 
 export default {
   name: 'Attach',
@@ -71,9 +72,10 @@ export default {
       total: 0,
       loading: false,
       tableData: null,
-      keys: ['id', 'filename', 'size', 'path', 'hash', 'email'],
-      headers: ['ID', '文件名', '文件大小', '路径', '哈希', '所属邮件'],
-      widths: ['70', '', '80', '', '', '']
+      keys: ['id', 'name', 'size', 'path', 'emailHash', 'emailId'],
+      headers: ['ID', '文件名', '文件大小(KB)', '路径', '哈希', '所属邮件'],
+      widths: ['70', '', '120', '', '', ''],
+      selections: []
     }
   },
   created() {
@@ -83,9 +85,9 @@ export default {
     getTableData() {
       this.loading = true
       setTimeout(async() => {
-        const res = await emailAttach({ page: this.page, limit: this.limit })
+        const res = await getAttachmentList({ page: this.page, limit: this.limit })
         this.tableData = res.data
-        this.total = res.total
+        this.total = res.count
         this.loading = false
       }, 200)
     },
@@ -96,6 +98,25 @@ export default {
     changeSize(size) {
       this.limit = size
       this.getTableData()
+    },
+    handleSelectionChange(val) {
+      this.selection = val.map(item => item.id)
+    },
+    deleteOneAttachment(data, index) {
+      delAttachment(data.id).then((res) => {
+        if (res.code === 0) {
+          this.tableData.splice(index, 1)
+        }
+      })
+    },
+    deleteMoreAttachment() {
+      delAttachments(this.selection).then((res) => {
+        if (res.code === 0) {
+          this.tableData = this.tableData.filter((item) => {
+            return this.selection.indexOf(item.id) === -1
+          })
+        }
+      })
     }
   }
 }
@@ -103,13 +124,10 @@ export default {
 
 <style scoped lang="scss">
 .attach-page {
-  &__header {
-    .el-form-item {
-      margin-bottom: 0;
-    }
-  }
   &__content {
-    margin-top: 20px;
+    .option {
+      margin-bottom: 20px;
+    }
   }
 }
 </style>

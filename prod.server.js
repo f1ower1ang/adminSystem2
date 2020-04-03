@@ -7,9 +7,9 @@ app.use(bodyParser.json())
 const user = require('./mock/user')
 const dashboard = require('./mock/dashboard')
 const emailManage = require('./mock/emailManage')
-const emailTrace = require('./mock/emailTrace')
-const ruleManage = require('./mock/ruleManage')
-const userManage = require('./mock/userManage')
+const emailTrace = require('./mock/email-trace')
+const ruleManage = require('./mock/rule-manage')
+const userManage = require('./mock/user-manage')
 
 const mocks = [
   ...user,

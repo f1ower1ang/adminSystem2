@@ -1,9 +1,38 @@
 import path from '@/assets/js/path'
 import request from '@/utils/request'
 
-export function analyseRecord(data) {
+export function getRecordList(data) {
   return request({
-    url: path.emailTrace.record,
+    url: path.emailTrace.recordList,
+    method: 'post',
+    data
+  })
+}
+
+export function checkRule(id) {
+  return request({
+    url: path.emailTrace.checkRule,
+    method: 'get',
+    params: {
+      id
+    }
+  })
+}
+
+export function uploadFile(data) {
+  return request({
+    url: path.emailTrace.uploadFile,
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+export function addSourceData(data) {
+  return request({
+    url: path.emailTrace.addSourceData,
     method: 'post',
     data
   })

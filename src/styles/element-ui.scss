@@ -77,3 +77,45 @@
     }
   }
 }
+
+.common-form {
+  .el-row {
+    .el-form-item {
+      width: 19.5%;
+      margin-right: 0;
+      padding-right: 10px;
+      box-sizing: border-box;
+      .el-form-item__content {
+        width: calc(100% - 75px)
+      }
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+  }
+}
+.el-radio__input {
+  vertical-align: top;
+}
+.el-radio__label {
+  padding-left: 6px;
+}
+
+.common-dialog {
+  .el-dialog__header {
+    background-color: $color-theme;
+    padding: 15px;
+    color: #fff;
+    .el-button {
+      color: #fff !important;
+    }
+    .el-dialog__headerbtn {
+      top: 14px;
+      right: 15px;
+      i {
+        color: #fff;
+      }
+    }
+  }
+}
+

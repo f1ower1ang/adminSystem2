@@ -4,23 +4,49 @@ module.exports = {
     logout: '/user/logout',
     info: '/user/getInfo'
   },
-  dashboard: '/dashboard',
+  dashboard: {
+    statistic: '/getStatistics'
+  },
   emailManage: {
-    default: '/emailManage',
-    attachManage: '/email/attachManage'
+    emailList: '/email/findAll',
+    attachList: '/attachment/findAll',
+    deleteEmailByIds: '/email/delMore',
+    deleteEmailById: '/email/delOne',
+    deleteAttachmentById: '/attachment/delOne',
+    deleteAttachmentByIds: '/attachment/delMore',
+    checkRule: '/rule/findOne'
   },
   emailTrace: {
-    record: '/email/record'
+    recordList: '/trace/findAll',
+    checkRule: '/rule/findOne',
+    addSourceData: '/trace/addSourceForEmail',
+    uploadFile: '/trace/uploadMany'
   },
   ruleManage: {
-    define: '/ruleManage/define',
+    ruleList: '/rule/findAll',
+    ruleAdd: '/rule/addOne',
     import: '/ruleManage/import',
     organise: '/ruleManage/organise',
-    target: '/ruleManage/target'
+    targetList: '/victim/findAll',
+    deleteTarget: '/victim/delOne',
+    deleteTargets: '/victim/delMore',
+    addTarget: '/victim/addOne'
   },
   userManage: {
-    accountManage: '/accountManage',
-    roleManage: '/roleManage',
-    permissionManage: '/permissionManage'
+    userList: '/user/findAll',
+    deleteUser: '/user/delOne',
+    deleteUsers: '/user/delMore',
+    addUser: '/user/addOne',
+    editUser: '/user/editOne',
+    roleList: '/role/findAll',
+    addRole: '/role/addOne',
+    editRole: '/role/editOne',
+    deleteRole: '/role/delOne',
+    deleteRoles: '/role/delMore',
+    permList: '/menu/findAll',
+    addPerm: '/menu/addOne',
+    editPerm: '/menu/editOne',
+    deletePerm: '/menu/delOne',
+    deletePerms: '/menu/delMore',
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="app-sidebar">
     <el-scrollbar wrap-class="scrollbar-wrapper">
       <div class="title" :class="{'is-active': !sidebar.opened}">
         <p>导航菜单</p>
@@ -63,29 +63,38 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .title {
-    height: 40px;
-    font-size: $font-size-medium-x;
-    color: #15a4ce;
-    padding: 0 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .app-sidebar {
+    padding: 0 2px;
     box-sizing: border-box;
-    .el-icon {
-      color: #567fc1;
-      cursor: pointer;
-      transition: all .3s;
+    .el-scrollbar {
+      height: calc(100% - 75px) !important;
+      border-radius: 4px;
+      border: 1px solid $color-theme;
     }
-    &.is-active {
-      display: block;
-      text-align: center;
-      line-height: 40px;
-      p {
-        display: none;
-      }
+    .title {
+      height: 40px;
+      font-size: $font-size-medium-x;
+      color: #15a4ce;
+      padding: 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
       .el-icon {
-        transform: rotate(180deg);
+        color: #567fc1;
+        cursor: pointer;
+        transition: all .3s;
+      }
+      &.is-active {
+        display: block;
+        text-align: center;
+        line-height: 40px;
+        p {
+          display: none;
+        }
+        .el-icon {
+          transform: rotate(180deg);
+        }
       }
     }
   }

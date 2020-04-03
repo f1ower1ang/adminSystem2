@@ -1,17 +1,25 @@
-const path = require('./path')
+// const path = require('./path')
+const path = require('../src/assets/js/path')
 
 module.exports = [
   {
-    url: path.ruleManage.define,
+    url: path.ruleManage.ruleList,
     type: 'post',
     response: (config) => {
       const { page, limit } = config.body
-      const { data, total } = require('./json/ruleDefine')
+      const { data, count } = require('./json/rule_findall')
       return {
         data: data.slice((page - 1) * limit, page * limit),
-        total,
+        count,
         code: 0
       }
+    }
+  },
+  {
+    url: path.ruleManage.ruleAdd,
+    type: 'post',
+    response: (config) => {
+      return require('./json/rule_addone')
     }
   },
   {

@@ -6,8 +6,8 @@ module.exports = {
   },
   dashboard: '/dashboard',
   emailManage: {
-    default: '/emailManage',
-    attachManage: '/email/attachManage'
+    emailList: '/email/findAll',
+    attachList: '/attachment/findAll'
   },
   emailTrace: {
     record: '/email/record'

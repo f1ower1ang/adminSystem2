@@ -1,24 +1,27 @@
 <template>
   <div class="role-manage-page app-container">
-    <el-card class="role-manage-page__header">
-      <el-form :model="formData" :inline="true">
-        <el-form-item label="角色名称">
-          <el-input v-model="formData.name" size="small" placeholder="请输入角色名称" />
-        </el-form-item>
-        <el-form-item label="角色描述">
-          <el-input v-model="formData.description" size="small" placeholder="请输入角色描述" />
-        </el-form-item>
-        <el-form-item label="英文名称">
-          <el-input v-model="formData.enName" size="small" placeholder="请输入英文名称" />
-        </el-form-item>
-        <el-form-item>
-          <el-button icon="el-icon-search" type="primary" size="small" />
-        </el-form-item>
+    <section-title title="角色管理" />
+    <div class="role-manage-page__header">
+      <el-form :model="formData" :inline="true" class="common-form" labei-width="75px">
+        <el-row>
+          <el-form-item label="角色名称:">
+            <el-input v-model="formData.name" size="small" placeholder="请输入角色名称" />
+          </el-form-item>
+          <el-form-item label="角色描述:">
+            <el-input v-model="formData.description" size="small" placeholder="请输入角色描述" />
+          </el-form-item>
+          <el-form-item label="英文名称:">
+            <el-input v-model="formData.enName" size="small" placeholder="请输入英文名称" />
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="el-icon-search" type="success" size="small">查询</el-button>
+          </el-form-item>
+        </el-row>
       </el-form>
-    </el-card>
-    <el-card class="role-manage-page__content">
+    </div>
+    <div class="role-manage-page__content">
       <div class="option">
-        <el-button size="small" type="danger">删除</el-button>
+        <el-button size="small" type="danger" @click="deleteMoreRole">删除</el-button>
         <el-button size="small" type="primary" @click="showDialog">添加</el-button>
       </div>
       <pagination
@@ -28,7 +31,7 @@
         @select-page="changePage"
         @select-size="changeSize"
       >
-        <el-table v-loading="loading" :data="tableData">
+        <el-table v-loading="loading" :data="tableData" class="common-table" stripe @selection-change="handleSelectionChange">
           <el-table-column
             type="selection"
             width="50"
@@ -43,21 +46,21 @@
             :show-overflow-tooltip="true"
           />
           <el-table-column label="操作" align="center" width="200">
-            <template slot-scope="{ row }">
-              <el-button type="primary" icon="el-icon-edit" size="mini" @click="edit(row)">编辑</el-button>
-              <el-button type="danger" icon="el-icon-delete" size="mini" @click="del(row)">删除</el-button>
+            <template slot-scope="{ row, $index }">
+              <el-button type="primary" plain size="mini" @click="edit(row)">编辑</el-button>
+              <el-button type="danger" plain size="mini" @click="deleteOneRole(row, $index)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </pagination>
-    </el-card>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="100px" width="40%">
+    </div>
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="225px" width="40%" class="common-dialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>添加角色信息</p>
         <el-button
           icon="el-icon-full-screen"
           type="text"
-          style="margin-right: 20px; color: #909399"
+          style="margin-right: 30px"
           @click="fullscreen = !fullscreen"
         />
       </div>
@@ -88,7 +91,7 @@
 </template>
 
 <script>
-import { getRoles } from '../../api/userManage'
+import { deleteRole, deleteRoles, getRoleList } from '../../api/userManage'
 
 export default {
   name: 'RoleManage',
@@ -155,7 +158,8 @@ export default {
             id: 12,
             label: 'TTP'
           }]
-      }
+      },
+      selection: []
     }
   },
   created() {
@@ -165,9 +169,9 @@ export default {
     getTableData() {
       this.loading = true
       setTimeout(async() => {
-        const res = await getRoles({ page: this.page, limit: this.limit })
+        const res = await getRoleList({ page: this.page, limit: this.limit })
         this.tableData = res.data
-        this.total = res.total
+        this.total = res.count
         this.loading = false
       }, 200)
     },
@@ -179,12 +183,27 @@ export default {
       this.limit = size
       this.getTableData()
     },
+    handleSelectionChange(val) {
+      this.selection = val.map(item => item.id)
+    },
     showDialog() {
       this.dialogTableVisible = true
     },
     edit(item) {
     },
-    del(item) {
+    deleteOneRole(item, index) {
+      deleteRole(item.id).then((res) => {
+        if (res.code === 0) {
+          this.tableData.splice(index, 1)
+        }
+      })
+    },
+    deleteMoreRole() {
+      deleteRoles(this.selection).then((res) => {
+        if (res.code === 0) {
+          this.tableData = this.tableData.filter(item => this.selection.indexOf(item.id) === -1)
+        }
+      })
     }
   }
 }
@@ -193,7 +212,9 @@ export default {
 <style scoped lang="scss">
   .role-manage-page {
     &__content {
-      margin-top: 20px
+      .option {
+        margin-bottom: 10px
+      }
     }
 
     .el-dialog {
