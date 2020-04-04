@@ -5,7 +5,7 @@
       <el-form :model="formData" :inline="true" class="common-form" label-width="75px">
         <el-row>
           <el-form-item label="规则属性:">
-            <el-select v-model="formData.property" size="small" placeholder="请选择属性">
+            <el-select v-model="formData.attr" size="small" placeholder="请选择属性">
               <el-option label="强规则" value="strong" />
               <el-option label="弱规则" value="weak" />
             </el-select>
@@ -17,44 +17,38 @@
             </el-select>
           </el-form-item>
           <el-form-item label="源数据:">
-            <el-input v-model="formData.source" size="small" placeholder="请输入源数据" />
+            <el-input v-model="formData.value" size="small" placeholder="请输入源数据" />
           </el-form-item>
           <el-form-item label="关联邮件:">
-            <el-select v-model="formData.relateEmail" size="small" placeholder="请选择关联邮件">
-              <el-option label="发件邮箱" value="send" />
-              <el-option label="收件邮箱" value="receive" />
-            </el-select>
+            <el-input v-model="formData.emailId" size="small" placeholder="选择关联邮件" disabled>
+              <el-button slot="append" icon="el-icon-search" @click="getEmailData" />
+            </el-input>
           </el-form-item>
         </el-row>
         <el-row>
           <el-form-item label="关系:">
-            <el-select v-model="formData.relative" size="small" placeholder="请选择关系">
+            <el-select v-model="formData.relation" size="small" placeholder="请选择关系">
               <el-option label="并且" value="and" />
               <el-option label="或者" value="or" />
             </el-select>
           </el-form-item>
-          <el-form-item label="表达式:">
-            <el-select v-model="formData.expression" size="small" placeholder="请选择表达式">
-              <el-option label="单条件" value="single" />
-              <el-option label="多条件" value="multiple" />
-            </el-select>
-          </el-form-item>
           <el-form-item label="所属组织:">
-            <el-select v-model="formData.apt" size="small" placeholder="请选择所属组织">
-              <el-option label="APT32" value="apt32" />
-              <el-option label="APT8" value="apt8" />
+            <el-select v-model="formData.aptName" size="small" placeholder="请选择所属组织">
+              <template v-if="dic.APT">
+                <el-option v-for="(aptName, index) in dic.APT" :key="index" :label="aptName" :value="aptName" />
+              </template>
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="success" size="small">查询</el-button>
+            <el-button icon="el-icon-search" type="success" size="small" @click="search">查询</el-button>
           </el-form-item>
         </el-row>
       </el-form>
     </div>
     <div class="rule-manage-page__content">
       <div class="option">
-        <el-button size="small" type="danger">删除</el-button>
-        <el-button size="small" type="primary" @click="openDialog">添加</el-button>
+        <el-button size="small" type="danger" @click="deleteMoreItem">删除</el-button>
+        <el-button size="small" type="primary" @click="showDialog('添加规则', '修改规则')">添加</el-button>
       </div>
       <pagination
         :size="limit"
@@ -63,12 +57,26 @@
         @select-page="changePage"
         @select-size="changeSize"
       >
-        <el-table v-loading="loading" :data="tableData" class="common-table" stripe>
-          <el-table-column
-            type="selection"
-            width="50"
-            align="center"
-          />
+        <el-table v-loading="loading" :data="tableData" class="common-table" stripe @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="50" align="center" />
+          <el-table-column label="ID" prop="id" align="center" />
+          <el-table-column label="规则类型" show-overflow-tooltip align="center">
+            <template slot-scope="{ row }">
+              {{ dic.types[row.type] }}
+            </template>
+          </el-table-column>
+          <el-table-column label="源数据" show-overflow-tooltip align="center">
+            <template slot-scope="{ row }">
+              <p :class="!row.eqSource ? 'color-red': 'color-green'">
+                {{ dic.eqSource[row.eqSource] }}
+              </p>
+            </template>
+          </el-table-column>
+          <el-table-column label="规则属性" show-overflow-tooltip align="center">
+            <template slot-scope="{ row }">
+              {{ dic.attr[row.attr] }}
+            </template>
+          </el-table-column>
           <el-table-column v-for="(label, index) in headers" :key="index" :label="label" :prop="keys[index]" align="center" :show-overflow-tooltip="true" />
           <el-table-column label="表达式" align="center" width="90">
             <template slot-scope="{ row }">
@@ -77,56 +85,119 @@
           </el-table-column>
           <el-table-column label="关系" align="center" width="90">
             <template slot-scope="{ row }">
-              <p>{{ row.relation }}</p>
+              <p>{{ row.relation.length > 0 ? dic.relation[row.relation] : '' }}</p>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="200" align="center">
-            <template slot-scope="{ row }">
-              <el-button type="primary" size="mini" plain @click="edit(row)">编辑</el-button>
-              <el-button type="danger" size="mini" plain @click="del(row)">删除</el-button>
+            <template slot-scope="{ row, $index }">
+              <el-button type="primary" size="mini" plain @click="showDialog('添加规则', '修改规则', 'ruleForm', row, $index)">编辑</el-button>
+              <el-button type="danger" size="mini" plain @click="deleteOneItem(row, $index, delRule)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="100px" width="40%" class="common-dialog">
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="100px" width="690px" class="common-dialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
-        <p>添加规则</p>
+        <p>{{ dialogTitle }}</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
       </div>
-      <el-form :model="ruleForm" label-width="90px">
-        <el-form-item label="关联邮件">
-          <el-select v-model="ruleForm.relate" size="small" placeholder="请选择关联邮件">
-            <el-option label="关联邮件选项1" value="choice1" />
-            <el-option label="关联邮件选项2" value="choice2" />
-          </el-select>
+      <el-form ref="ruleForm" :model="ruleForm" label-width="100px" :rules="rules">
+        <el-form-item label="关联邮件" prop="filePath">
+          <el-input v-model="ruleForm.filePath" size="small" style="width: 70%" disabled>
+            <el-button slot="append" icon="el-icon-search" @click="getEmailData" />
+          </el-input>
         </el-form-item>
-        <el-form-item label="规则属性">
-          <el-select v-model="ruleForm.property" size="small" placeholder="请选择属性">
+        <el-form-item label="规则属性" prop="attr">
+          <el-select v-model="ruleForm.attr" size="small" placeholder="请选择属性">
             <el-option label="强规则" value="strong" />
             <el-option label="弱规则" value="weak" />
           </el-select>
         </el-form-item>
-        <el-form-item label="规则表达式">
-          <el-input v-model="ruleForm.expression" size="small" placeholder="请输入规则表达式" style="width: 70%" />
+        <el-form-item label="规则表达式" prop="type">
+          <dl class="expression">
+            <dt>
+              <span>当待分析邮件的</span>
+              <el-select v-model="ruleForm.type" size="small" placeholder="规则类型" style="width: 130px">
+                <el-option v-for="(t, index) in Object.keys(dic.types)" :key="index" :value="t" :label="dic.types[t]" />
+              </el-select>
+              <span>=</span>
+              <el-input v-model="ruleForm.value" size="small" style="width: 150px" :placeholder="ruleForm.placeholder" :disabled="ruleForm.eqSource" />
+              <el-checkbox v-model="ruleForm.eqSource" class="common-checkbox" @click.native="changePlaceholder(ruleForm)">对应源数据</el-checkbox>
+              <el-button size="mini" type="primary" icon="el-icon-plus" style="padding: 5px; border-radius: 0" @click="addSubRule" />
+            </dt>
+            <dd v-for="(subRule, index) in ruleForm.subRules" :key="index">
+              <el-select v-model="subRule.relation" size="small" placeholder="关系" style="width: 98px">
+                <el-option v-for="(relation, idx) in Object.keys(dic.relation)" :key="idx" :value="relation" :label="dic.relation[relation]" />
+              </el-select>
+              <el-select v-model="subRule.type" size="small" placeholder="规则类型" style="width: 130px">
+                <el-option v-for="(type, idx) in Object.keys(dic.types)" :key="idx" :value="type" :label="dic.types[type]" />
+              </el-select>
+              <span>=</span>
+              <el-input v-model="subRule.value" size="small" style="width: 150px" placeholder="规则值" :disabled="ruleForm.eqSource" />
+              <el-checkbox v-model="subRule.eqSource" class="common-checkbox" @click="changePlaceholder(subRule)">对应源数据</el-checkbox>
+            </dd>
+          </dl>
         </el-form-item>
-        <el-form-item label="所属组织">
-          <el-select v-model="ruleForm.apt" size="small" placeholder="请选择组织">
-            <el-option label="APT32" value="apt32" />
-            <el-option label="APT8" value="apt8" />
+        <el-form-item label="所属组织" prop="aptName">
+          <el-select v-model="ruleForm.aptName" size="small" placeholder="请选择组织">
+            <template v-if="dic.APT">
+              <el-option v-for="(aptName, index) in dic.APT" :key="index" :label="aptName" :value="aptName" />
+            </template>
           </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" size="small" @click="dialogTableVisible = false">确 定</el-button>
-        <el-button size="small" @click="dialogTableVisible = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="addOrEditItem('ruleForm', 'ruleForm', addRule, editRule)">确 定</el-button>
+        <el-button size="small" @click="cancel('ruleForm')">取 消</el-button>
       </div>
+    </el-dialog>
+    <el-dialog :visible.sync="searchDialog" :fullscreen="searchFullScreen" top="100px" width="50%" class="common-dialog">
+      <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
+        <p>邮件搜索</p>
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="searchFullScreen = !searchFullScreen" />
+      </div>
+      <el-form :model="searchForm" inline label-width="90px">
+        <el-form-item label="邮件路径:">
+          <el-input v-model="searchForm.filePath" size="small" type="email" placeholder="请输入邮件路径" />
+        </el-form-item>
+        <el-form-item label="发件人邮箱:">
+          <el-input v-model="searchForm.fromAdd" size="small" placeholder="请输入发件人邮箱" />
+        </el-form-item>
+        <el-form-item label="发件IP:">
+          <el-input v-model="searchForm.fromIp" size="small" placeholder="请输入发件IP" />
+        </el-form-item>
+        <el-form-item label="邮件标题:">
+          <el-input v-model="searchForm.subject" size="small" placeholder="请输入邮件标题" />
+        </el-form-item>
+        <el-form-item>
+          <el-button size="small" icon="el-icon-search" type="success" @click="searchEmail">查询</el-button>
+        </el-form-item>
+      </el-form>
+      <pagination
+        :total="searchTotal"
+        :page="searchPage"
+        :size="searchLimit"
+        @select-page="changeSearchPage"
+        @select-size="changeSearchSize"
+      >
+        <el-table v-loading="searchLoading" :data="emailData" class="common-table" stripe>
+          <el-table-column v-for="(header, index) in searchHeaders" :key="index" :label="header" :prop="searchKeys[index]" align="center" show-overflow-tooltip />
+          <el-table-column label="操作" width="90" align="center">
+            <template slot-scope="{ row }">
+              <el-button type="primary" size="mini" plain @click="selectEmail(row)">选择</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </pagination>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { getRuleList } from '../../api/ruleManage'
+import { getRuleList, editRule, delRule, addRule, delRules, getAptList } from '../../api/ruleManage'
+import CommonMixin from '../common-mixin'
+import { getEmailList } from '../../api/emailManage'
 
 export default {
   name: 'Index',
@@ -135,61 +206,140 @@ export default {
       return rules.length === 0 ? '单条件' : '多条件'
     }
   },
+  mixins: [CommonMixin],
   data() {
     return {
       formData: {
-        property: '',
+        attr: '',
         type: '',
-        source: '',
-        relative: '',
-        expression: '',
-        apt: '',
-        relateEmail: ''
+        value: '',
+        emailId: '',
+        relation: '',
+        aptName: ''
       },
-      keys: ['id', 'type', 'eqSource', 'attr', 'aptName', 'emailId', 'subRules', 'relation'],
-      headers: ['ID', '规则类型', '源数据', '规则属性', '所属于组织', '关联邮件'],
-      tableData: null,
-      page: 1,
-      limit: 8,
-      total: 0,
-      loading: false,
-      fullscreen: false,
-      dialogTableVisible: false,
+      keys: ['aptName', 'emailId', 'subRules', 'relation'],
+      headers: ['所属于组织', '关联邮件'],
       ruleForm: {
-        relate: '',
-        property: '',
-        expression: '',
-        apt: ''
-      }
+        attr: '',
+        type: '',
+        value: '',
+        eqSource: false,
+        aptName: '',
+        emailId: '',
+        filePath: '',
+        placeholder: '规则值',
+        subRules: []
+      },
+      rules: {
+        filePath: { required: true, message: '请点击搜索图标选择邮件', trigger: 'blur' },
+        attr: { required: true, message: '请选择规则属性', trigger: 'blur' },
+        type: { required: true, message: '请选择邮件类型', trigger: 'blur' },
+        aptName: { required: true, message: '请选择所属组织', trigger: 'blur' }
+      },
+      dialogTitle: '添加规则',
+      searchDialog: false,
+      searchFullScreen: false,
+      searchForm: {
+        filePath: '',
+        fromAdd: '',
+        fromIp: '',
+        subject: ''
+      },
+      editItem: editRule,
+      delItem: delRule,
+      delItems: delRules,
+      addItem: addRule,
+      getItems: getRuleList,
+      searchHeaders: ['邮件路径', '发件邮箱', '发件IP', '邮件标题'],
+      searchKeys: ['filePath', 'fromAdd', 'fromIp', 'subject'],
+      searchLoading: false,
+      searchPage: 1,
+      searchLimit: 8,
+      searchTotal: 0,
+      emailData: null
     }
   },
-  created() {
+  async created() {
+    this.loading = true
+    const res = await getAptList({ limit: 9999, page: 1 })
+    this.dic.APT = []
+    res.data.forEach((res) => {
+      this.dic.APT.push(res.name)
+    })
     this.getTableData()
   },
   methods: {
-    getTableData() {
-      this.loading = true
-      setTimeout(async() => {
-        const res = await getRuleList({ page: this.page, limit: this.limit, pid: 0 })
-        this.tableData = res.data
-        this.total = res.count
-        this.loading = false
-      }, 200)
+    getEmailData() {
+      this.searchDialog = true
+      this.searchLoading = true
+      const data = {}
+      Object.assign(data, this.searchForm, {
+        page: this.searchPage,
+        limit: this.searchLimit
+      })
+      getEmailList(data).then((res) => {
+        this.emailData = res.data.map((item) => {
+          return {
+            emailId: item.id,
+            filePath: item.filePath,
+            subject: item.subject,
+            fromAdd: item.fromAdd,
+            fromIp: item.fromIp
+          }
+        })
+        this.searchTotal = res.count
+        this.searchLoading = false
+      })
     },
-    changePage(page) {
-      this.page = page
-      this.getTableData()
+    searchEmail() {
+      this.searchPage = 1
+      this.searchLimit = 1
+      this.getEmailData()
     },
-    changeSize(size) {
-      this.limit = size
-      this.getTableData()
+    closeSearch() {
+      this.searchDialog = false
+      this.emailData = null
+      this.searchTotal = 0
+      this.searchPage = 1
+      this.searchLimit = 8
+      this.searchForm = this.$options.data().searchForm
     },
-    edit(item) {
+    changeSearchPage(page) {
+      this.searchPage = page
+      this.getEmailData()
     },
-    del(item) {
+    changeSearchSize(size) {
+      this.searchLimit = size
+      this.getEmailData()
     },
-    openDialog() {
-      this.dialogTableVisible = true
+    selectEmail(email) {
+      if (this.dialogTableVisible) {
+        Object.assign(this.ruleForm, email)
+      } else {
+        this.formData.emailId = email.emailId
+      }
+      this.closeSearch()
+    },
+    addSubRule() {
+      const obj = {
+        type: '',
+        relation: '',
+        value: '',
+        eqSource: false,
+        placeholder: '规则值'
+      }
+      if (this.ruleForm.pid) {
+        obj.pid = this.ruleForm.pid
+      }
+      this.ruleForm.subRules.push(obj)
+    },
+    changePlaceholder(rule) {
+      if (!rule.eqSource) {
+        rule.value = ''
+        rule.placeholder = '对应源数据'
+      } else {
+        rule.placeholder = '规则值'
+      }
     }
   }
 }

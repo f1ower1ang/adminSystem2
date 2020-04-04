@@ -17,7 +17,7 @@ export function getAttachmentList(data) {
   })
 }
 
-export function delEmail(id) {
+export function deleteEmail(id) {
   return request({
     url: path.emailManage.deleteEmailById,
     method: 'get',
@@ -25,7 +25,7 @@ export function delEmail(id) {
   })
 }
 
-export function delEmails(ids) {
+export function deleteEmails(ids) {
   return request({
     url: path.emailManage.deleteEmailByIds,
     method: 'post',
@@ -33,7 +33,7 @@ export function delEmails(ids) {
   })
 }
 
-export function delAttachment(id) {
+export function deleteAttachment(id) {
   return request({
     url: path.emailManage.deleteAttachmentById,
     method: 'get',
@@ -41,7 +41,7 @@ export function delAttachment(id) {
   })
 }
 
-export function delAttachments(ids) {
+export function deleteAttachments(ids) {
   return request({
     url: path.emailManage.deleteAttachmentById,
     method: 'post',

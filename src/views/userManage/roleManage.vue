@@ -14,15 +14,15 @@
             <el-input v-model="formData.enName" size="small" placeholder="请输入英文名称" />
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="success" size="small">查询</el-button>
+            <el-button icon="el-icon-search" type="success" size="small" @click="search">查询</el-button>
           </el-form-item>
         </el-row>
       </el-form>
     </div>
     <div class="role-manage-page__content">
       <div class="option">
-        <el-button size="small" type="danger" @click="deleteMoreRole">删除</el-button>
-        <el-button size="small" type="primary" @click="showDialog">添加</el-button>
+        <el-button size="small" type="danger" @click="deleteMoreItem">删除</el-button>
+        <el-button size="small" type="primary" @click="showDialog(null)">添加</el-button>
       </div>
       <pagination
         :size="limit"
@@ -47,8 +47,8 @@
           />
           <el-table-column label="操作" align="center" width="200">
             <template slot-scope="{ row, $index }">
-              <el-button type="primary" plain size="mini" @click="edit(row)">编辑</el-button>
-              <el-button type="danger" plain size="mini" @click="deleteOneRole(row, $index)">删除</el-button>
+              <el-button type="primary" plain size="mini" @click="showDialog(row, $index)">编辑</el-button>
+              <el-button type="danger" plain size="mini" @click="deleteOneItem(row, $index)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -56,7 +56,7 @@
     </div>
     <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="225px" width="40%" class="common-dialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
-        <p>添加角色信息</p>
+        <p>{{ dialogTitle }}</p>
         <el-button
           icon="el-icon-full-screen"
           type="text"
@@ -64,37 +64,40 @@
           @click="fullscreen = !fullscreen"
         />
       </div>
-      <el-form :model="roleForm" label-width="90px">
-        <el-form-item label="角色名称">
+      <el-form ref="roleForm" :model="roleForm" label-width="90px" :rules="rules">
+        <el-form-item label="角色名称" prop="name">
           <el-input v-model="roleForm.name" size="small" placeholder="请输入角色名称" />
         </el-form-item>
         <el-form-item label="角色描述">
           <el-input v-model="roleForm.description" size="small" placeholder="请输入角色描述" />
         </el-form-item>
-        <el-form-item label="英文名称">
+        <el-form-item label="英文名称" prop="enName">
           <el-input v-model="roleForm.enName" size="small" placeholder="请输入英文名称" />
         </el-form-item>
-        <el-form-item label="角色权限">
+        <el-form-item label="角色权限" style="vertical-align: top">
           <el-tree
-            :data="roleForm.permission"
+            ref="tree"
+            :data="roleForm.menus"
             show-checkbox
             node-key="id"
           />
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" size="small" @click="dialogTableVisible = false">确 定</el-button>
-        <el-button size="small" @click="dialogTableVisible = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="addOrEditRole">确 定</el-button>
+        <el-button size="small" @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { deleteRole, deleteRoles, getRoleList } from '../../api/userManage'
+import { addRole, deleteRole, deleteRoles, editRole, getMenu, getRoleList } from '../../api/userManage'
+import CommonMixin from '../common-mixin'
 
 export default {
   name: 'RoleManage',
+  mixins: [CommonMixin],
   data() {
     return {
       formData: {
@@ -102,106 +105,104 @@ export default {
         description: '',
         enName: ''
       },
-      tableData: null,
       headers: ['ID', '角色名称', '角色描述', '英文名称'],
       keys: ['id', 'name', 'description', 'enName'],
-      page: 1,
-      limit: 8,
-      total: 0,
-      loading: false,
-      fullscreen: false,
-      dialogTableVisible: false,
       roleForm: {
         name: '',
         description: '',
         enName: '',
-        permission: [
-          {
-            id: 1,
-            label: '用户',
-            children: [
-              {
-                id: 3,
-                label: '角色管理',
-                children: [{
-                  id: 4,
-                  label: '三级 3-1-1'
-                }, {
-                  id: 5,
-                  label: '三级 3-1-2'
-                }]
-              }, {
-                id: 2,
-                label: '资源管理',
-                children: [
-                  {
-                    id: 6,
-                    label: '查看'
-                  }, {
-                    id: 7,
-                    label: '删除'
-                  }, {
-                    id: 8,
-                    label: '修改'
-                  }, {
-                    id: 9,
-                    label: '添加'
-                  }]
-              }, {
-                id: 10,
-                label: '用户管理'
-              }]
-          }, {
-            id: 11,
-            label: '报告'
-          }, {
-            id: 12,
-            label: 'TTP'
-          }]
+        menus: []
       },
-      selection: []
+      rules: {
+        name: { required: true, message: '请输入角色名称', trigger: 'blur' },
+        enName: { required: true, message: '请输入英文名称', trigger: 'blur' }
+      },
+      dialogTitle: '添加角色信息',
+      checkedList: [],
+      trees: null,
+      delItem: deleteRole,
+      delItems: deleteRoles,
+      getItems: getRoleList
     }
   },
-  created() {
+  async created() {
+    this.loading = true
+    getMenu({ pid: 0 }).then((res) => {
+      let data = JSON.stringify(res.data)
+      data = data.replace(/\"title\"/g, '"label"')
+      this.trees = JSON.parse(data)
+      this.roleForm.menus = this.trees
+    })
     this.getTableData()
   },
   methods: {
-    getTableData() {
-      this.loading = true
-      setTimeout(async() => {
-        const res = await getRoleList({ page: this.page, limit: this.limit })
-        this.tableData = res.data
-        this.total = res.count
-        this.loading = false
-      }, 200)
-    },
-    changePage(page) {
-      this.page = page
-      this.getTableData()
-    },
-    changeSize(size) {
-      this.limit = size
-      this.getTableData()
-    },
-    handleSelectionChange(val) {
-      this.selection = val.map(item => item.id)
-    },
-    showDialog() {
-      this.dialogTableVisible = true
-    },
-    edit(item) {
-    },
-    deleteOneRole(item, index) {
-      deleteRole(item.id).then((res) => {
-        if (res.code === 0) {
-          this.tableData.splice(index, 1)
+    showDialog(role = null, index = -1) {
+      this.editIndex = index
+      this.dialogTitle = index === -1 ? '添加角色信息' : '编辑角色信息'
+      this.checkedList.splice(0)
+      if (this.editIndex !== -1) {
+        Object.assign(this.roleForm, this.tableData[index])
+        const dfs = (item) => {
+          if (item.checked) {
+            this.checkedList.push(item.id)
+          }
+          if (item.children.length > 0) {
+            item.children.forEach((child) => {
+              dfs(child)
+            })
+          }
         }
+        role.menus.forEach((item) => {
+          dfs(item)
+        })
+      }
+      this.roleForm.menus = this.trees
+      this.dialogTableVisible = true
+      this.$nextTick(() => {
+        this.$refs.tree.setCheckedKeys(this.checkedList)
       })
     },
-    deleteMoreRole() {
-      deleteRoles(this.selection).then((res) => {
-        if (res.code === 0) {
-          this.tableData = this.tableData.filter(item => this.selection.indexOf(item.id) === -1)
+    getCheckedTree(checkedList) {
+      const ret = this.trees.slice()
+      const dfs = (item) => {
+        if (checkedList.length > 0) {
+          const index = checkedList.indexOf(item.id)
+          if (index > -1) {
+            item.checked = true
+            checkedList.splice(index, 1)
+          }
+          item.children.forEach((child) => {
+            dfs(child)
+          })
+        }
+      }
+      ret.forEach((item) => {
+        dfs(item)
+      })
+      return ret
+    },
+    addOrEditRole() {
+      this.$refs.roleForm.validate((valid) => {
+        if (valid) {
+          let menus = JSON.stringify(this.getCheckedTree(this.$refs.tree.getCheckedKeys()))
+          menus = menus.replace(/\"label\"/g, '"title"')
+          this.roleForm.menus = JSON.parse(menus)
+          if (this.editIndex === -1) {
+            addRole(this.roleForm).then((res) => {
+              this.tableData.unshift(res.data)
+              if (this.tableData.length > this.limit) {
+                this.tableData.pop()
+              }
+              this.total += 1
+              this.$message.success('添加成功')
+            })
+          } else {
+            editRole(this.roleForm).then((res) => {
+              Object.assign(this.tableData[this.editIndex], res.data)
+              this.$message.success('修改成功')
+            })
+          }
+          this.cancel('roleForm')
         }
       })
     }

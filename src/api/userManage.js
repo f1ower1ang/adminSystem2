@@ -120,3 +120,11 @@ export function addRole(data) {
     data
   })
 }
+
+export function getMenu(data) {
+  return request({
+    url: path.userManage.menus,
+    method: 'post',
+    data
+  })
+}

@@ -3,27 +3,31 @@
     <section-title title="受害者目标管理" />
     <div class="target-manage-page__header">
       <el-form :model="formData" :inline="true">
+        <el-form-item label="收件邮箱">
+          <el-input v-model="formData.toAdd" size="small" placeholder="请输入收件邮箱" />
+        </el-form-item>
+        <el-form-item label="省份">
+          <el-input v-model="formData.province" size="small" placeholder="请输入省份" />
+        </el-form-item>
+        <el-form-item label="单位">
+          <el-input v-model="formData.organization" size="small" placeholder="请输入单位" />
+        </el-form-item>
         <el-form-item label="组织名称">
-          <el-input v-model="formData.apt" size="small" placeholder="请输入组织名称" />
-        </el-form-item>
-        <el-form-item label="组织别名">
-          <el-input v-model="formData.alias" size="small" placeholder="请输入组织别名" />
-        </el-form-item>
-        <el-form-item label="发起国家">
-          <el-select v-model="formData.country" size="small" placeholder="请选择发起国家">
-            <el-option label="美国" value="America" />
-            <el-option label="日本" value="Japan" />
+          <el-select v-model="formData.aptName" size="small" placeholder="请选择组织名称">
+            <template v-if="dic.APT">
+              <el-option v-for="(aptName, index) in dic.APT" :key="index" :label="aptName" :value="aptName" />
+            </template>
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button icon="el-icon-search" type="primary" size="small" />
+          <el-button icon="el-icon-search" type="primary" size="small" @click="search" />
         </el-form-item>
       </el-form>
     </div>
     <div class="target-manage-page__content">
       <div class="option">
-        <el-button size="small" type="danger" @click="deleteMoreTarget">删除</el-button>
-        <el-button size="small" type="primary">添加</el-button>
+        <el-button size="small" type="danger" @click="deleteMoreItem">删除</el-button>
+        <el-button size="small" type="primary" @click="showDialog('添加受害者目标', '修改受害者目标')">添加</el-button>
         <el-button size="small" type="success">批量导入</el-button>
       </div>
       <pagination
@@ -42,81 +46,89 @@
           <el-table-column v-for="(label, index) in headers" :key="index" :label="label" :prop="keys[index]" align="center" :show-overflow-tooltip="true" />
           <el-table-column label="操作" align="center">
             <template slot-scope="{ row, $index }">
-              <el-button type="primary" plain size="mini" @click="edit(row)">编辑</el-button>
-              <el-button type="danger" plain size="mini" @click="deleteOneTarget(row, $index)">删除</el-button>
+              <el-button type="primary" plain size="mini" @click="showDialog('添加受害者目标', '修改受害者目标', 'targetForm', row, $index)">编辑</el-button>
+              <el-button type="danger" plain size="mini" @click="deleteOneItem(row, $index,)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </pagination>
     </div>
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="180px" :rules="rules" width="40%" class="common-dialog">
+      <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
+        <p>{{ dialogTitle }}</p>
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
+      </div>
+      <el-form ref="targetForm" :model="targetForm" label-width="90px" :rules="rules">
+        <el-form-item label="收件邮箱" prop="toAdd">
+          <el-input v-model="targetForm.toAdd" size="small" placeholder="请输入收件邮箱" style="width: 70%" />
+        </el-form-item>
+        <el-form-item label="单位" prop="organization">
+          <el-input v-model="targetForm.organization" size="small" placeholder="请输入单位" style="width: 70%" />
+        </el-form-item>
+        <el-form-item label="省份" prop="province">
+          <el-input v-model="targetForm.province" size="small" placeholder="请输入省份" style="width: 70%" />
+        </el-form-item>
+        <el-form-item label="组织名称" prop="aptName">
+          <el-input v-model="targetForm.aptName" size="small" placeholder="请输入组织名称" style="width: 70%" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button type="primary" size="small" @click="addOrEditItem('targetForm', 'targetForm')">确 定</el-button>
+        <el-button size="small" @click="cancel('targetForm')">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-  import { delTarget, delTargets, getTargetList } from '../../api/ruleManage'
+import { delTarget, delTargets, getTargetList, addTarget, editTarget, getAptList } from '../../api/ruleManage'
+import CommonMixin from '../common-mixin'
 
 export default {
   name: 'TargetManage',
+  mixins: [CommonMixin],
   data() {
     return {
       formData: {
-        email: '',
+        toAdd: '',
         province: '',
-        unit: '',
-        apt: ''
+        organization: '',
+        aptName: ''
       },
       tableData: null,
       headers: ['ID', '组织名称', '收件邮箱', '单位', '省份'],
       keys: ['id', 'aptName', 'toAdd', 'organization', 'province'],
-      page: 1,
-      limit: 8,
-      total: 0,
-      loading: false,
-      selections: []
+      dialogTitle: '添加受害者目标',
+      targetForm: {
+        toAdd: '',
+        organization: '',
+        province: '',
+        aptName: ''
+      },
+      rules: {
+        toAdd: [
+          { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+          { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur'] }
+        ],
+        organization: { required: true, message: '请输入单位', trigger: 'blur' },
+        province: { required: true, message: '请输入省份', trigger: 'blur' },
+        aptName: { required: true, message: '请输入组织名称', trigger: 'blur' }
+      },
+      editItem: editTarget,
+      delItem: delTarget,
+      delItems: delTargets,
+      addItem: addTarget,
+      getItems: getTargetList
     }
   },
-  created() {
+  async created() {
+    this.loading = true
+    const res = await getAptList({ limit: 9999, page: 1 })
+    this.dic.APT = []
+    res.data.forEach((res) => {
+      this.dic.APT.push(res.name)
+    })
     this.getTableData()
-  },
-  methods: {
-    getTableData() {
-      this.loading = true
-      setTimeout(async() => {
-        const res = await getTargetList({ page: this.page, limit: this.limit })
-        this.tableData = res.data
-        this.total = res.total
-        this.loading = false
-      }, 200)
-    },
-    changePage(page) {
-      this.page = page
-      this.getTableData()
-    },
-    changeSize(size) {
-      this.limit = size
-      this.getTableData()
-    },
-    handleSelectionChange(val) {
-      this.selection = val.map(item => item.id)
-    },
-    edit(item) {
-    },
-    deleteOneTarget(item, index) {
-      delTarget(item.id).then((res) => {
-        if (res.code === 0) {
-          this.tableData.splice(index, 1)
-        }
-      })
-    },
-    deleteMoreTarget() {
-      delTargets(this.selection).then((res) => {
-        if (res.code === 0) {
-          this.tableData = this.tableData.filter((item) => {
-            return this.selection.indexOf(item.id) === -1
-          })
-        }
-      })
-    }
   }
 }
 </script>

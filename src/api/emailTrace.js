@@ -19,6 +19,26 @@ export function checkRule(id) {
   })
 }
 
+export function deleteRecord(id) {
+  return request({
+    url: path.emailTrace.delRecord,
+    method: 'get',
+    params: {
+      id
+    }
+  })
+}
+
+export function deleteRecords(ids) {
+  return request({
+    url: path.emailTrace.delRecord,
+    method: 'post',
+    data: {
+      ids
+    }
+  })
+}
+
 export function uploadFile(data) {
   return request({
     url: path.emailTrace.uploadFile,

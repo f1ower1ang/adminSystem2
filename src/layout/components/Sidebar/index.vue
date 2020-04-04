@@ -67,9 +67,10 @@ export default {
     padding: 0 2px;
     box-sizing: border-box;
     .el-scrollbar {
-      height: calc(100% - 75px) !important;
+      height: calc(100% - 65px) !important;
       border-radius: 4px;
       border: 1px solid $color-theme;
+      overflow: hidden;
     }
     .title {
       height: 40px;

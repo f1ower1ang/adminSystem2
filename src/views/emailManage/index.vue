@@ -4,45 +4,60 @@
     <el-form :model="formData" :inline="true" label-width="75px" class="common-form">
       <el-row>
         <el-form-item label="发件邮箱:">
-          <el-input v-model="formData.sendEmail" size="small" type="email" placeholder="请输入发件邮箱" />
+          <el-input v-model="formData.fromAdd" size="small" type="email" placeholder="请输入发件邮箱" />
         </el-form-item>
         <el-form-item label="发件IP:">
-          <el-input v-model="formData.sendIP" size="small" placeholder="请输入发件IP" />
+          <el-input v-model="formData.fromIp" size="small" placeholder="请输入发件IP" />
         </el-form-item>
         <el-form-item label="邮件标题:">
-          <el-input v-model="formData.emailTitle" size="small" placeholder="请输入邮件标题" />
+          <el-input v-model="formData.subject" size="small" placeholder="请输入邮件标题" />
         </el-form-item>
         <el-form-item label="邮件正文:">
-          <el-input v-model="formData.emailText" size="small" placeholder="请输入邮件正文" />
+          <el-input v-model="formData.content" size="small" placeholder="请输入邮件正文" />
         </el-form-item>
       </el-row>
       <el-row>
         <el-form-item label="所属组织:">
-          <el-select v-model="formData.APT" size="small" placeholder="请选择所属组织">
-            <el-option label="APT32" value="APT32" />
-            <el-option label="APT28" value="APT28" />
+          <el-select v-model="formData.aptName" size="small" placeholder="请选择所属组织">
+            <template v-if="dic.APT">
+              <el-option v-for="(aptName, index) in dic.APT" :key="index" :label="aptName" :value="aptName" />
+            </template>
           </el-select>
         </el-form-item>
         <el-form-item label="发件日期:">
-          <el-input v-model="formData.startDate" size="small" placeholder="请输入起始日期" />
+          <el-date-picker
+            v-model="formData.startDate"
+            style="width: 100%"
+            type="date"
+            size="small"
+            value-format="yyyy-MM-dd"
+            placeholder="yyyy-MM-dd"
+          />
         </el-form-item>
         <el-form-item>
           <p slot="label" style="text-align: center">至</p>
-          <el-input v-model="formData.endDate" size="small" placeholder="请输入截止日期" />
+          <el-date-picker
+            v-model="formData.endDate"
+            style="width: 100%"
+            type="date"
+            size="small"
+            value-format="yyyy-MM-dd"
+            placeholder="yyyy-MM-dd"
+          />
         </el-form-item>
         <el-form-item label="是否查看" style="min-width: 19.5%;">
-          <el-radio-group v-model="formData.check">
-            <el-radio label="全部">全部</el-radio>
-            <el-radio label="是">是</el-radio>
-            <el-radio label="否">否</el-radio>
+          <el-radio-group v-model="formData.read">
+            <el-radio label="">全部</el-radio>
+            <el-radio :label="true">是</el-radio>
+            <el-radio :label="false">否</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-button icon="el-icon-search" type="success" size="small">查询</el-button>
+        <el-button icon="el-icon-search" type="success" size="small" @click="search">查询</el-button>
       </el-row>
     </el-form>
     <div class="email-manage-page__content">
       <div class="option">
-        <el-button size="small" type="danger" @click="deleteMoreEmail">删除</el-button>
+        <el-button size="small" type="danger" @click="deleteMoreItem">删除</el-button>
         <el-button size="small" type="primary">统计分析</el-button>
       </div>
       <pagination
@@ -62,14 +77,14 @@
           <el-table-column label="分析结果" width="180" align="center">
             <template v-if="row.trace" slot-scope="{ row }">
               <p v-for="(item, index) in row.trace.rules || []" :key="index" style="line-height: 35px">
-                {{ item.attr }}:{{ item.aptName }}
+                {{ dic.attr[item.attr] }}:{{ item.aptName }}
                 <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">查看</el-button>
               </p>
             </template>
           </el-table-column>
           <el-table-column label="添加源数据" width="90" align="center">
             <template slot-scope="{ row }">
-              <p :class="!row.trace ? 'color-red': 'color-green'">{{ row.trace | toWords }}</p>
+              <p :class="!row.trace || !row.trace.addRule ? 'color-red': 'color-green'">{{ row.trace | toWords }}</p>
             </template>
           </el-table-column>
           <el-table-column label="是否查看" width="80" align="center">
@@ -81,13 +96,13 @@
             <template slot-scope="{ row, $index }">
               <el-button type="primary" size="mini" plain @click="check(row)">查看</el-button>
               <el-button type="success" size="mini" plain>记录</el-button>
-              <el-button type="danger" size="mini" plain @click="deleteOneEmail(row, $index)">删除</el-button>
+              <el-button type="danger" size="mini" plain @click="deleteOneItem(row, $index)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="emailDialogTableVisible" :fullscreen="fullscreen" top="55px" class="common-dialog">
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="55px" class="common-dialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>查看邮件</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
@@ -98,7 +113,7 @@
           <template slot-scope="{ row }">
             <div v-if="row.flag">
               <p v-for="(item, index) in row.value" :key="index" style="line-height: 35px">
-                {{ item.attr }}:{{ item.aptName }}
+                {{ dic.attr[item.attr] }}:{{ item.aptName }}
                 <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">查看</el-button>
               </p>
             </div>
@@ -127,7 +142,9 @@
   </div>
 </template>
 <script>
-import { checkRule, delEmail, delEmails, getEmailList } from '../../api/emailManage'
+import { checkRule, deleteEmail, deleteEmails, getEmailList } from '../../api/emailManage'
+import { getAptList } from '../../api/ruleManage'
+import CommonMixin from '../common-mixin'
 
 export default {
   name: 'Index',
@@ -145,62 +162,44 @@ export default {
       }
     }
   },
+  mixins: [CommonMixin],
   data() {
     return {
       formData: {
-        sendEmail: '',
-        sendIP: '',
-        emailTitle: '',
-        emailText: '',
-        APT: '',
+        fromAdd: '',
+        fromIp: '',
+        subject: '',
+        content: '',
+        aptName: '',
         startDate: '',
         endDate: '',
-        check: '全部'
+        read: ''
       },
-      tableData: null,
       headers: ['ID', '发件邮箱', '发件IP', '邮件标题', '发件日期', '所属组织'],
       keys: ['id', 'fromAdd', 'fromIp', 'subject', 'date', 'aptName', 'trace', 'read'],
       widths: ['70', '', '130', '', '100', '', '', '100'],
-      page: 1,
-      limit: 8,
-      total: 0,
-      loading: false,
       curData: null,
-      emailDialogTableVisible: false,
       ruleDialogTableVisible: false,
-      fullscreen: false,
-      selection: [],
       rule: null,
       dialogHeaders: ['规则属性', '规则类型', '匹配源数据', '所属组织', '关联邮件'],
       dialogKeys: ['attr', 'type', 'value', 'aptName', 'emailId'],
       dialogWidths: ['100', '100', '', '100', ''],
-      ruleFullscreen: false
+      ruleFullscreen: false,
+      getItems: getEmailList,
+      delItem: deleteEmail,
+      delItems: deleteEmails
     }
   },
-  created() {
+  async created() {
+    this.loading = true
+    const res = await getAptList({ limit: 9999, page: 1 })
+    this.dic.APT = []
+    res.data.forEach((res) => {
+      this.dic.APT.push(res.name)
+    })
     this.getTableData()
   },
   methods: {
-    getTableData() {
-      this.loading = true
-      setTimeout(async() => {
-        const res = await getEmailList({ page: this.page, limit: this.limit })
-        this.tableData = res.data
-        this.total = res.count
-        this.loading = false
-      }, 200)
-    },
-    changePage(page) {
-      this.page = page
-      this.getTableData()
-    },
-    changeSize(size) {
-      this.limit = size
-      this.getTableData()
-    },
-    handleSelectionChange(val) {
-      this.selection = val.map(item => item.id)
-    },
     check(data) {
       this.curData = []
       const keys = ['发件邮箱', '发件IP', '收件邮箱', '发件时间', '邮件标题', '邮件正文', '邮件附件', '分析结果', '添加源数据', '关联邮件']
@@ -234,29 +233,14 @@ export default {
         value: emailId,
         flag: false
       })
-      console.log(this.curData)
       this.emailDialogTableVisible = true
     },
     viewRule(rule) {
       checkRule(rule.id).then((res) => {
+        res.data.attr = this.dic.attr[res.data.attr]
+        res.data.type = this.dic.types[res.data.type]
         this.rule = [res.data]
         this.ruleDialogTableVisible = true
-      })
-    },
-    deleteOneEmail(data, index) {
-      delEmail(data.id).then((res) => {
-        if (res.code === 0) {
-          this.tableData.splice(index, 1)
-        }
-      })
-    },
-    deleteMoreEmail() {
-      delEmails(this.selection).then((res) => {
-        if (res.code === 0) {
-          this.tableData = this.tableData.filter((item) => {
-            return this.selection.indexOf(item.id) === -1
-          })
-        }
       })
     }
   }

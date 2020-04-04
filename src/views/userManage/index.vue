@@ -11,24 +11,24 @@
             <el-input v-model="formData.realName" size="small" placeholder="请输入真实姓名" />
           </el-form-item>
           <el-form-item label="用户电话:">
-            <el-input v-model="formData.phone" size="small" placeholder="请输入用户电话" />
+            <el-input v-model="formData.telephone" size="small" placeholder="请输入用户电话" />
           </el-form-item>
           <el-form-item label="用户状态:">
-            <el-select v-model="formData.status" size="small" placeholder="请选择状态">
-              <el-option label="正常" value="normal" />
-              <el-option label="冻结" value="freeze" />
+            <el-select v-model="formData.state" size="small" placeholder="请选择状态">
+              <el-option label="正常" value="1" />
+              <el-option label="锁定" value="0" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="success" size="small">查询</el-button>
+            <el-button icon="el-icon-search" type="success" size="small" @click="search">查询</el-button>
           </el-form-item>
         </el-row>
       </el-form>
     </div>
     <div class="user-manage-page__content">
       <div class="option">
-        <el-button size="small" type="danger" @click="deleteMoreUser">删除</el-button>
-        <el-button size="small" type="primary" @click="showDialog">添加</el-button>
+        <el-button size="small" type="danger" @click="deleteMoreItem">删除</el-button>
+        <el-button size="small" type="primary" @click="showDialog(null)">添加</el-button>
       </div>
       <pagination
         :size="limit"
@@ -43,11 +43,21 @@
             width="50"
             align="center"
           />
-          <el-table-column v-for="(label, index) in headers" :key="index" :label="label" :prop="keys[index]" align="center" :show-overflow-tooltip="true" :width="widths[index]" />
+          <el-table-column v-for="(label, index) in headers" :key="index" :label="label" :prop="keys[index]" align="center" show-overflow-tooltip :width="widths[index]" />
+          <el-table-column label="用户状态" align="center" width="100">
+            <template slot-scope="{ row }">
+              {{ dic.state[row.state] }}
+            </template>
+          </el-table-column>
+          <el-table-column label="用户角色" align="center" show-overflow-tooltip>
+            <template slot-scope="{ row }">
+              {{ dic.roleId[row.roleId] }}
+            </template>
+          </el-table-column>
           <el-table-column label="操作" align="center" width="200">
             <template slot-scope="{ row, $index }">
-              <el-button type="primary" plain size="mini" @click="edit(row)">编辑</el-button>
-              <el-button type="danger" plain size="mini" @click="deleteOneUser(row, $index)">删除</el-button>
+              <el-button type="primary" plain size="mini" @click="showDialog(row, $index)">编辑</el-button>
+              <el-button type="danger" plain size="mini" @click="deleteOneItem(row, $index)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -55,136 +65,156 @@
     </div>
     <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="150px" width="40%" class="common-dialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
-        <p>添加用户信息</p>
+        <p>{{ dialogTitle }}</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px;" @click="fullscreen = !fullscreen" />
       </div>
-      <el-form :model="accountForm" label-width="90px">
-        <el-form-item label="用户账号">
-          <el-input v-model="accountForm.username" size="small" type="text" placeholder="请输入用户账号" />
+      <el-form ref="accountForm" :model="accountForm" label-width="90px" :rules="rules">
+        <el-form-item label="用户账号" prop="userName">
+          <el-input v-model="accountForm.userName" size="small" type="text" placeholder="请输入用户账号" />
         </el-form-item>
-        <el-form-item label="真实姓名">
-          <el-input v-model="accountForm.realName" size="small" type="text" placeholder="请输入用户账号" />
+        <el-form-item label="真实姓名" prop="realName">
+          <el-input v-model="accountForm.realName" size="small" type="text" placeholder="请输入真实姓名" />
         </el-form-item>
-        <el-form-item label="用户密码">
-          <el-input v-model="accountForm.password" size="small" type="password" placeholder="请输入用户账号" />
+        <el-form-item label="用户密码" prop="password">
+          <el-input v-model="accountForm.password" size="small" type="password" placeholder="请输入用户密码" />
         </el-form-item>
-        <el-form-item label="重复密码">
-          <el-input v-model="accountForm.confirmPwd" size="small" type="password" placeholder="请输入用户账号" />
+        <el-form-item label="重复密码" prop="confirmPwd">
+          <el-input v-model="accountForm.confirmPwd" size="small" type="password" placeholder="请再次输入密码" />
         </el-form-item>
-        <el-form-item label="用户电话">
-          <el-input v-model="accountForm.phone" size="small" placeholder="请输入用户账号" />
+        <el-form-item label="用户电话" prop="telephone">
+          <el-input v-model="accountForm.telephone" size="small" placeholder="请输入用户电话" />
         </el-form-item>
-        <el-form-item label="用户邮件">
-          <el-input v-model="accountForm.email" size="small" placeholder="请输入用户账号" />
+        <el-form-item label="用户邮件" prop="email">
+          <el-input v-model="accountForm.email" size="small" placeholder="请输入用户邮件" />
         </el-form-item>
         <el-form-item label="添加时间">
-          <el-input v-model="accountForm.date" size="small" disabled placeholder="请输入用户账号" />
+          <el-input v-model="accountForm.addTime" size="small" disabled placeholder="请输入添加时间" />
         </el-form-item>
         <el-form-item label="用户状态">
-          <el-radio-group v-model="accountForm.status">
-            <el-radio label="normal">正常</el-radio>
-            <el-radio label="lock">锁定</el-radio>
+          <el-radio-group v-model="accountForm.state">
+            <el-radio label="1">正常</el-radio>
+            <el-radio label="0">锁定</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="用户角色">
-          <el-select v-model="accountForm.role" size="small" placeholder="请选择用户角色">
-            <el-option label="TTP管理员" value="apt32" />
-            <el-option label="系统管理员" value="apt8" />
-            <el-option label="普通用户" value="apt8" />
+        <el-form-item label="用户角色" prop="roleId">
+          <el-select v-model="accountForm.roleId" size="small" placeholder="请选择用户角色">
+            <template v-if="dic.roleId">
+              <el-option v-for="roleId in Object.keys(dic.roleId)" :key="roleId" :value="roleId" :label="dic.roleId[roleId]" />
+            </template>
           </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" size="small" @click="dialogTableVisible = false">确 定</el-button>
-        <el-button size="small" @click="dialogTableVisible = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="addOrEditItem('accountForm', 'accountForm')">确 定</el-button>
+        <el-button size="small" @click="cancel('accountForm')">取 消</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { deleteUser, deleteUsers, getUserList } from '../../api/userManage'
+import { addUser, deleteUser, deleteUsers, editUser, getRoleList, getUserList } from '../../api/userManage'
+import { validPhone } from '../../utils/validate'
+import CommonMixin from '../common-mixin'
 
 export default {
   name: 'Index',
+  mixins: [CommonMixin],
   data() {
+    const validatePass = (rule, value, callback) => {
+      if (value === '' && this.editIndex === -1) {
+        callback(new Error('请输入密码'))
+      } else {
+        if (this.accountForm.confirmPwd !== '') {
+          this.$refs.accountForm.validateField('confirmPwd')
+        }
+        callback()
+      }
+    }
+    const validatePass2 = (rule, value, callback) => {
+      if (value === '' && this.editIndex === -1) {
+        callback(new Error('请再次输入密码'))
+      } else if (value !== this.accountForm.password) {
+        callback(new Error('两次输入密码不一致!'))
+      } else {
+        callback()
+      }
+    }
+    const validatePhone = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error('请输入手机号码'))
+      } else if (!validPhone(value)) {
+        callback(new Error('请输入正确的11位手机号码'))
+      } else {
+        callback()
+      }
+    }
     return {
       formData: {
         username: '',
         realName: '',
-        phone: '',
-        status: ''
+        telephone: '',
+        state: ''
       },
-      tableData: null,
-      headers: ['ID', '用户名', '真实姓名', '用户电话', '用户邮箱', '添加时间', '用户状态', '用户角色'],
-      keys: ['id', 'username', 'realName', 'telephone', 'email', 'addTime', 'state', 'roleId'],
+      headers: ['ID', '用户名', '真实姓名', '用户电话', '用户邮箱', '添加时间'],
+      keys: ['id', 'userName', 'realName', 'telephone', 'email', 'addTime'],
       widths: ['70', '', '90', '', '', '', '90', '100'],
-      page: 1,
-      limit: 8,
-      total: 0,
-      loading: false,
-      fullscreen: false,
-      dialogTableVisible: false,
       accountForm: {
-        username: '',
+        userName: '',
         realName: '',
         password: '',
         confirmPwd: '',
-        phone: '',
+        telephone: '',
         email: '',
-        date: '',
-        status: 'normal',
-        role: ''
+        addTime: '',
+        state: '1',
+        roleId: ''
       },
-      selections: []
+      rules: {
+        password: { required: true, validator: validatePass, trigger: 'blur' },
+        confirmPwd: { required: true, validator: validatePass2, trigger: 'blur' },
+        userName: { required: true, message: '请输入用户账号', trigger: 'blur' },
+        realName: { required: true, message: '请输入真实姓名', trigger: 'blur' },
+        telephone: { required: true, validator: validatePhone, trigger: 'blur' },
+        roleId: [{ required: true, message: '请选择用户角色', trigger: 'change' }],
+        email: [
+          { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+          { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur'] }
+        ]
+      },
+      dialogTitle: '添加用户信息',
+      editItem: editUser,
+      delItem: deleteUser,
+      delItems: deleteUsers,
+      addItem: addUser,
+      getItems: getUserList
     }
   },
-  created() {
-    this.getTableData()
+  async created() {
+    this.loading = true
+    const res = await getRoleList({ page: 1, limit: 9999 })
+    this.dic.roleId = {}
+    res.data.forEach((item) => {
+      this.dic.roleId[item.id] = item.name
+    })
+    this.getTableData(getUserList)
   },
   methods: {
-    getTableData() {
-      this.loading = true
-      setTimeout(async() => {
-        const res = await getUserList({ page: this.page, limit: this.limit })
-        this.tableData = res.data
-        this.total = res.total
-        this.loading = false
-      }, 200)
-    },
-    changePage(page) {
-      this.page = page
-      this.getTableData()
-    },
-    changeSize(size) {
-      this.limit = size
-      this.getTableData()
-    },
-    handleSelectionChange(val) {
-      this.selection = val.map(item => item.id)
-    },
-    showDialog() {
-      this.accountForm.date = this.getDate()
+    showDialog(user = null, index = -1) {
+      this.editIndex = index
+      if (user) {
+        Object.assign(this.accountForm, user)
+        this.accountForm.state = this.accountForm.state.toString()
+        this.accountForm.roleId = this.accountForm.roleId.toString()
+        this.accountForm.password = ''
+        this.accountForm.confirmPwd = ''
+      }
+      this.dialogTitle = index === -1 ? '添加用户信息' : '编辑用户信息'
+      this.accountForm.addTime = this.getDate()
       this.dialogTableVisible = true
     },
     getDate() {
       return new Date().toLocaleString('chinese', { hour12: false }).replace(/\//g, '-')
-    },
-    edit(item) {
-    },
-    deleteOneUser(user, index) {
-      deleteUser(user.id).then((res) => {
-        if (res.code === 0) {
-          this.tableData.splice(index, 1)
-        }
-      })
-    },
-    deleteMoreUser() {
-      deleteUsers(this.selection).then((res) => {
-        if (res.code === 0) {
-          this.tableData = this.tableData.filter(item => this.selection.indexOf(item.id) === -1)
-        }
-      })
     }
   }
 }

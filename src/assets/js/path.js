@@ -18,19 +18,29 @@ module.exports = {
   },
   emailTrace: {
     recordList: '/trace/findAll',
+    delRecord: '/trace/delOne',
+    delRecords: '/trace/delMore',
     checkRule: '/rule/findOne',
     addSourceData: '/trace/addSourceForEmail',
     uploadFile: '/trace/uploadMany'
   },
   ruleManage: {
     ruleList: '/rule/findAll',
-    ruleAdd: '/rule/addOne',
+    addRule: '/rule/addOne',
+    editRule: '/rule/editOne',
+    deleteRule: '/rule/delOne',
+    deleteRules: '/rule/delMore',
     import: '/ruleManage/import',
-    organise: '/ruleManage/organise',
     targetList: '/victim/findAll',
+    addTarget: '/victim/addOne',
+    editTarget: '/victim/editOne',
     deleteTarget: '/victim/delOne',
     deleteTargets: '/victim/delMore',
-    addTarget: '/victim/addOne'
+    APTList: '/apts/findAll',
+    addAPT: '/apts/addOne',
+    editAPT: '/apts/editOne',
+    deleteAPT: '/apts/delOne',
+    deleteAPTs: '/apts/delMore'
   },
   userManage: {
     userList: '/user/findAll',
@@ -48,5 +58,6 @@ module.exports = {
     editPerm: '/menu/editOne',
     deletePerm: '/menu/delOne',
     deletePerms: '/menu/delMore',
+    menus: '/menu/findAllForTree'
   }
 }

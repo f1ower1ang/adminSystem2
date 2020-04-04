@@ -17,18 +17,16 @@
     <section-title title="最近分析" more @go-to="goTo('/emailTrace/record')" />
     <div class="dashboard-page__content">
       <el-table :data="tableData" class="common-table" stripe>
-        <el-table-column
-          v-for="(label, index) in headers"
-          :key="index"
-          :label="label"
-          :prop="keys[index]"
-          align="center"
-          show-overflow-tooltip
-        />
+        <el-table-column label="文件名" prop="emailId" align="center" />
+        <el-table-column label="分析类型" align="center">
+          <template slot-scope="{ row }">
+            {{ dic.uploadType[row.type] }}
+          </template>
+        </el-table-column>
         <el-table-column label="分析结果" align="center">
           <template slot-scope="{ row }">
             <p v-for="(rule, index) in row.rules" :key="index" style="line-height: 35px">
-              {{ rule.attr }}:{{ rule.aptName }}
+              {{ dic.attr[rule.attr] }}:{{ rule.aptName }}
               <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(rule)">查看</el-button>
             </p>
           </template>
@@ -60,6 +58,7 @@
 <script>
 import { getStatistic } from '../../api/dashboard'
 import { checkRule, getRecordList } from '../../api/emailTrace'
+import dic from '../../assets/js/dic'
 
 export default {
   filters: {
@@ -70,8 +69,6 @@ export default {
   data() {
     return {
       tableData: null,
-      headers: ['文件名', '分析类型'],
-      keys: ['emailId', 'type'],
       headerData: [
         {
           bg: require('../../assets/slices/source-data.png'),
@@ -95,7 +92,8 @@ export default {
       curData: null,
       dialogHeaders: ['规则属性', '规则类型', '匹配源数据', '所属组织', '关联邮件'],
       dialogKeys: ['attr', 'type', 'value', 'aptName', 'emailId'],
-      widths: ['100', '100', '', '100', '']
+      widths: ['100', '100', '', '100', ''],
+      dic
     }
   },
   created() {
@@ -112,6 +110,8 @@ export default {
   methods: {
     viewRule(rule) {
       checkRule(rule.id).then((res) => {
+        res.data.attr = dic.attr[res.data.attr]
+        res.data.type = dic.types[res.data.type]
         this.curData = [res.data]
         this.dialogTableVisible = true
       })

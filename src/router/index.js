@@ -56,12 +56,12 @@ export const constantRoutes = [
   },
 
   {
-    path: '/emailManage.json',
+    path: '/emailManage',
     meta: { title: '邮件管理', icon: 'manage' },
     component: Layout,
     children: [{
       path: '',
-      name: 'emailManage.json',
+      name: 'emailManage',
       component: () => import('@/views/emailManage/index'),
       meta: { title: '邮件管理' }
     }, {
@@ -129,7 +129,7 @@ export const constantRoutes = [
       path: 'permissionManage',
       name: 'permissionManage',
       component: () => import('@/views/userManage/permissionManage'),
-      meta: { title: '权限管理' }
+      meta: { title: '资源管理' }
     }, {
       path: 'roleManage',
       name: 'roleManage',
