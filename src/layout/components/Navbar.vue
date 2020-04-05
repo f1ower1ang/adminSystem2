@@ -48,7 +48,7 @@ export default {
   background-size: cover;
   background-position: center;
   width: 100%;
-  z-index: 2002;
+  z-index: 2001;
   border-bottom: 5px solid $bg-page-dark;
   padding: 0 20px;
 

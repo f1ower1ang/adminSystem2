@@ -54,7 +54,7 @@
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="225px" width="40%" class="common-dialog">
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="225px" width="40%" class="common-dialog" @close="cancel('roleForm')">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>{{ dialogTitle }}</p>
         <el-button

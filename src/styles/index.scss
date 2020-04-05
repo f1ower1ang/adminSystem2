@@ -65,3 +65,46 @@ div:focus {
 .app-container {
   padding: 15px;
 }
+
+.comment-wrapper {
+  border: 1px solid #EBEEF5;
+  .comment-list {
+    height: 82px;
+    overflow: auto;
+    border-bottom: 1px solid #EBEEF5;
+    padding: 0 10px;
+    .item {
+      line-height: 40px;
+      display: flex;
+      border-bottom: 1px solid #EBEEF5;
+      align-items: center;
+      &:last-child {
+        border-bottom: none;
+      }
+      .content {
+        flex: 1;
+      }
+      .username {
+        width: 80px;
+        text-align: right;
+        color: $color-pl;
+      }
+      .time {
+        width: 80px;
+        font-size: $font-size-small;
+        color: $color-weak;
+        text-align: right;
+      }
+    }
+  }
+  .comment-add {
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    height: 50px;
+    .el-input {
+      flex: 1;
+      margin: 0 10px;
+    }
+  }
+}

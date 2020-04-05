@@ -85,8 +85,11 @@
       margin-right: 0;
       padding-right: 10px;
       box-sizing: border-box;
+      vertical-align: baseline;
       .el-form-item__content {
-        width: calc(100% - 75px)
+        line-height: normal;
+        width: calc(100% - 75px);
+        vertical-align: middle;
       }
       &:last-child {
         padding-right: 0;

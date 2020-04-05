@@ -47,7 +47,7 @@
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="50px" class="common-dialog">
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="50px" class="common-dialog" @close="cancel('groupForm')">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>{{ dialogTitle }}</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px;" @click="fullscreen = !fullscreen" />
@@ -64,10 +64,14 @@
           <el-upload
             action="#"
             style="display: inline-block"
+            :show-file-list="false"
+            :before-upload="getImg"
           >
             <el-button icon="el-icon-upload">上传图片</el-button>
           </el-upload>
-          <el-button>查看图片</el-button>
+          <el-button style="position: relative" @click="checkPic">
+            查看图片
+          </el-button>
         </el-form-item>
         <el-form-item label="发起者">
           <el-input v-model="groupForm.initiator" placeholder="请输入发起者" />
@@ -113,11 +117,17 @@
         <el-button size="small" @click="cancel('groupForm')">取 消</el-button>
       </div>
     </el-dialog>
+    <transition name="el-fade-in-linear">
+      <div v-show="showPic" class="fullscreen-image">
+        <i class="el-icon-circle-close icon" @click="showPic = false" />
+        <img :src="groupForm.logo">
+      </div>
+    </transition>
   </div>
 </template>
 
 <script>
-import { getAptList, editAPT, addAPT, delAPT, delAPTs } from '../../api/ruleManage'
+import { getAptList, editAPT, addAPT, delAPT, delAPTs, uploadImg } from '../../api/ruleManage'
 import CommonMixin from '../common-mixin'
 
 export default {
@@ -150,7 +160,8 @@ export default {
       delItems: delAPTs,
       addItem: addAPT,
       getItems: getAptList,
-      dialogTitle: '添加组织信息'
+      dialogTitle: '添加组织信息',
+      showPic: false
     }
   },
   created() {
@@ -192,6 +203,29 @@ export default {
       }
       this.dialogTitle = index === -1 ? addTitle : editTitle
       this.dialogTableVisible = true
+    },
+    getImg(file) {
+      const allowed = ['image/jpg', 'image/gif', 'image/png', 'image/jpeg']
+      const limit = 2 * 1024 * 1024
+      if (allowed.indexOf(file.type) === -1) {
+        this.$message.error('只能上传jpg, gif, png图片')
+      } else {
+        if (file.size > limit) {
+          this.$message.error('图片大小不能超过2M')
+        } else {
+          const form = new FormData()
+          form.append('file', file)
+          uploadImg(form).then((res) => {
+            this.groupForm.logo = location.host + res.data
+          })
+        }
+      }
+      return false
+    },
+    checkPic() {
+      if (this.groupForm.logo !== '') {
+        this.showPic = true
+      }
     }
   }
 }
@@ -213,6 +247,36 @@ export default {
           width: 90%;
         }
       }
+    }
+  }
+  .fullscreen-image {
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, .3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    .icon {
+      position: absolute;
+      right: 40px;
+      top: 40px;
+      font-size: 40px;
+      color: $color-pl;
+      cursor: pointer;
+      transition: all .3s;
+      &:hover {
+        color: $color-theme;
+      }
+    }
+    img {
+      max-width: 100%;
+      max-height: 100%;
     }
   }
 }

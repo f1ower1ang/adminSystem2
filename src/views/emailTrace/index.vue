@@ -59,13 +59,7 @@ export default {
       tableData: null,
       headers: ['文件名', '大小', '进度', '状态', '分析结果'],
       keys: ['filename', 'size', 'percentage', 'status', 'result'],
-      widths: ['', '80', '', '100', ''],
-      APTS: [
-        {
-          label: 'APT32',
-          value: 'APT32'
-        }
-      ]
+      widths: ['', '80', '', '100', '']
     }
   },
   methods: {

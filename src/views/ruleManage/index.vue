@@ -20,8 +20,8 @@
             <el-input v-model="formData.value" size="small" placeholder="请输入源数据" />
           </el-form-item>
           <el-form-item label="关联邮件:">
-            <el-input v-model="formData.emailId" size="small" placeholder="选择关联邮件" disabled>
-              <el-button slot="append" icon="el-icon-search" @click="getEmailData" />
+            <el-input v-model="formData.emailId" size="small" placeholder="选择关联邮件" disabled @click.native="getEmailData">
+              <el-button slot="append" icon="el-icon-search" />
             </el-input>
           </el-form-item>
         </el-row>
@@ -59,17 +59,17 @@
       >
         <el-table v-loading="loading" :data="tableData" class="common-table" stripe @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column label="ID" prop="id" align="center" />
+          <el-table-column label="ID" prop="id" align="center" width="100" />
           <el-table-column label="规则类型" show-overflow-tooltip align="center">
             <template slot-scope="{ row }">
               {{ dic.types[row.type] }}
             </template>
           </el-table-column>
-          <el-table-column label="源数据" show-overflow-tooltip align="center">
+          <el-table-column label="源数据" show-overflow-tooltip align="center" width="80">
             <template slot-scope="{ row }">
-              <p :class="!row.eqSource ? 'color-red': 'color-green'">
+              <span :class="!row.eqSource ? 'color-red': 'color-green'">
                 {{ dic.eqSource[row.eqSource] }}
-              </p>
+              </span>
             </template>
           </el-table-column>
           <el-table-column label="规则属性" show-overflow-tooltip align="center">
@@ -77,7 +77,15 @@
               {{ dic.attr[row.attr] }}
             </template>
           </el-table-column>
-          <el-table-column v-for="(label, index) in headers" :key="index" :label="label" :prop="keys[index]" align="center" :show-overflow-tooltip="true" />
+          <el-table-column label="所属于组织" prop="aptName" align="center" show-overflow-tooltip />
+          <el-table-column label="关联邮件" align="center">
+            <template slot-scope="{ row }">
+              <p>
+                <span>{{ row.emailId }}</span>
+                <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="checkEmail(row.emailId)">查看</el-button>
+              </p>
+            </template>
+          </el-table-column>
           <el-table-column label="表达式" align="center" width="90">
             <template slot-scope="{ row }">
               <p>{{ row.subRules | expression }}</p>
@@ -97,15 +105,15 @@
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="100px" width="690px" class="common-dialog">
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="100px" width="690px" class="common-dialog" @close="cancel('ruleForm')">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>{{ dialogTitle }}</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
       </div>
       <el-form ref="ruleForm" :model="ruleForm" label-width="100px" :rules="rules">
         <el-form-item label="关联邮件" prop="filePath">
-          <el-input v-model="ruleForm.filePath" size="small" style="width: 70%" disabled>
-            <el-button slot="append" icon="el-icon-search" @click="getEmailData" />
+          <el-input v-model="ruleForm.filePath" size="small" style="width: 70%" disabled @click.native="getEmailData">
+            <el-button slot="append" icon="el-icon-search" />
           </el-input>
         </el-form-item>
         <el-form-item label="规则属性" prop="attr">
@@ -152,7 +160,7 @@
         <el-button size="small" @click="cancel('ruleForm')">取 消</el-button>
       </div>
     </el-dialog>
-    <el-dialog :visible.sync="searchDialog" :fullscreen="searchFullScreen" top="100px" width="50%" class="common-dialog">
+    <el-dialog :visible.sync="searchDialog" :fullscreen="searchFullScreen" top="100px" width="50%" class="common-dialog" @close="closeSearch">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>邮件搜索</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="searchFullScreen = !searchFullScreen" />
@@ -191,6 +199,64 @@
         </el-table>
       </pagination>
     </el-dialog>
+    <el-dialog :visible.sync="ruleDialogTableVisible" :fullscreen="ruleFullscreen" top="250px" class="common-dialog">
+      <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
+        <p>查看依据</p>
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="ruleFullscreen = !ruleFullscreen" />
+      </div>
+      <el-table :data="rule" border>
+        <el-table-column v-for="(header, index) in ruleDialogHeaders" :key="index" :label="header" :prop="ruleDialogKeys[index]" align="center" :width="ruleDialogWidths[index]" show-overflow-tooltip />
+      </el-table>
+      <div slot="footer">
+        <el-button size="small" @click="ruleDialogTableVisible = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="ruleDialogTableVisible = false">确 定</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog :visible.sync="emailDialogTableVisible" :fullscreen="fullscreen" top="55px" class="common-dialog" @close="closeDialog">
+      <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
+        <p>查看邮件</p>
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
+      </div>
+      <el-table :data="curData" border :show-header="false">
+        <el-table-column property="key" width="150" align="center" />
+        <el-table-column>
+          <template slot-scope="{ row }">
+            <div v-if="row.flag">
+              <p v-for="(item, index) in row.value" :key="index" style="line-height: 35px">
+                <template v-if="item.attr">
+                  {{ dic.attr[item.attr] }}:{{ item.aptName }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">查看</el-button>
+                </template>
+                <template v-else>
+                  {{ item.name }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">下载</el-button>
+                </template>
+              </p>
+            </div>
+            <div v-else style="white-space: pre-wrap;" v-html="row.value" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <p style="margin: 15px 0">分析记录</p>
+      <div class="comment-wrapper">
+        <ul v-if="commentList.length > 0" class="comment-list">
+          <li v-for="(comment, index) in commentList" :key="index" class="item">
+            <p class="content no-wrap">{{ comment.content }}</p>
+            <p class="username no-wrap">{{ comment.userName }}</p>
+            <p class="time">{{ comment.date.split(' ')[0] }}</p>
+          </li>
+        </ul>
+        <div class="comment-add">
+          <p>添加记录</p>
+          <el-input v-model="content" size="small" />
+          <el-button size="small" type="primary" @click="addComment">添加</el-button>
+        </div>
+      </div>
+      <div slot="footer">
+        <el-button size="small" @click="closeDialog">取 消</el-button>
+        <el-button type="primary" size="small" @click="closeDialog">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -198,6 +264,7 @@
 import { getRuleList, editRule, delRule, addRule, delRules, getAptList } from '../../api/ruleManage'
 import CommonMixin from '../common-mixin'
 import { getEmailList } from '../../api/emailManage'
+import ViewEmailMixin from '../view-email-mixin'
 
 export default {
   name: 'Index',
@@ -206,7 +273,7 @@ export default {
       return rules.length === 0 ? '单条件' : '多条件'
     }
   },
-  mixins: [CommonMixin],
+  mixins: [CommonMixin, ViewEmailMixin],
   data() {
     return {
       formData: {

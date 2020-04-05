@@ -67,7 +67,14 @@
             width="50"
             align="center"
           />
-          <el-table-column label="文件名" prop="emailId" align="center" />
+          <el-table-column label="文件名" align="center">
+            <template slot-scope="{ row }">
+              <p>
+                <span>{{ row.emailId }}</span>
+                <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="checkEmail(row.emailId)">查看</el-button>
+              </p>
+            </template>
+          </el-table-column>
           <el-table-column label="分析结果" align="center">
             <template slot-scope="{ row }">
               <p v-for="(rule, index) in row.rules" :key="index" style="line-height: 35px">
@@ -90,25 +97,71 @@
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="250px">
+    <el-dialog :visible.sync="ruleDialogTableVisible" :fullscreen="ruleFullscreen" top="250px" class="common-dialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>查看依据</p>
-        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 20px; color: #909399" @click="fullscreen = !fullscreen" />
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="ruleFullscreen = !ruleFullscreen" />
       </div>
-      <el-table :data="curData" border @selection-change="handleSelectionChange">
-        <el-table-column v-for="(header, index) in dialogHeaders" :key="index" :label="header" :prop="dialogKeys[index]" align="center" :width="widths[index]" show-overflow-tooltip />
+      <el-table :data="rule" border>
+        <el-table-column v-for="(header, index) in ruleDialogHeaders" :key="index" :label="header" :prop="ruleDialogKeys[index]" align="center" :width="ruleDialogWidths[index]" show-overflow-tooltip />
       </el-table>
       <div slot="footer">
-        <el-button size="small" @click="dialogTableVisible = false">取 消</el-button>
-        <el-button type="primary" size="small" @click="dialogTableVisible = false">确 定</el-button>
+        <el-button size="small" @click="ruleDialogTableVisible = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="ruleDialogTableVisible = false">确 定</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog :visible.sync="emailDialogTableVisible" :fullscreen="fullscreen" top="55px" class="common-dialog" @close="closeDialog">
+      <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
+        <p>查看邮件</p>
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
+      </div>
+      <el-table :data="curData" border :show-header="false">
+        <el-table-column property="key" width="150" align="center" />
+        <el-table-column>
+          <template slot-scope="{ row }">
+            <div v-if="row.flag">
+              <p v-for="(item, index) in row.value" :key="index" style="line-height: 35px">
+                <template v-if="item.attr">
+                  {{ dic.attr[item.attr] }}:{{ item.aptName }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">查看</el-button>
+                </template>
+                <template v-else>
+                  {{ item.name }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">下载</el-button>
+                </template>
+              </p>
+            </div>
+            <div v-else style="white-space: pre-wrap;" v-html="row.value" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <p style="margin: 15px 0">分析记录</p>
+      <div class="comment-wrapper">
+        <ul v-if="commentList.length > 0" class="comment-list">
+          <li v-for="(comment, index) in commentList" :key="index" class="item">
+            <p class="content no-wrap">{{ comment.content }}</p>
+            <p class="username no-wrap">{{ comment.userName }}</p>
+            <p class="time">{{ comment.date.split(' ')[0] }}</p>
+          </li>
+        </ul>
+        <div class="comment-add">
+          <p>添加记录</p>
+          <el-input v-model="content" size="small" />
+          <el-button size="small" type="primary" @click="addComment">添加</el-button>
+        </div>
+      </div>
+      <div slot="footer">
+        <el-button size="small" @click="closeDialog">取 消</el-button>
+        <el-button type="primary" size="small" @click="closeDialog">确 定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { checkRule, deleteRecord, deleteRecords, getRecordList } from '../../api/emailTrace'
+import { deleteRecord, deleteRecords, getRecordList } from '../../api/emailTrace'
 import CommonMixin from '../common-mixin'
+import ViewEmailMixin from '../view-email-mixin'
 import { getAptList } from '../../api/ruleManage'
 
 export default {
@@ -118,7 +171,7 @@ export default {
       return flag ? '是' : '否'
     }
   },
-  mixins: [CommonMixin],
+  mixins: [CommonMixin, ViewEmailMixin],
   data() {
     return {
       formData: {
@@ -129,12 +182,6 @@ export default {
         startDate: '',
         endDate: ''
       },
-      headers: ['文件名'],
-      keys: ['emailId', 'rules', 'addRule'],
-      dialogHeaders: ['规则属性', '规则类型', '匹配源数据', '所属组织', '关联邮件'],
-      dialogKeys: ['attr', 'type', 'value', 'aptName', 'emailId'],
-      widths: ['100', '100', '', '100', ''],
-      curData: null,
       getItems: getRecordList,
       delItem: deleteRecord,
       delItems: deleteRecords
@@ -148,16 +195,6 @@ export default {
       this.dic.APT.push(res.name)
     })
     this.getTableData()
-  },
-  methods: {
-    viewRule(rule) {
-      checkRule(rule.id).then((res) => {
-        res.data.attr = this.dic.attr[res.data.attr]
-        res.data.type = this.dic.types[res.data.type]
-        this.curData = [res.data]
-        this.dialogTableVisible = true
-      })
-    }
   }
 }
 </script>

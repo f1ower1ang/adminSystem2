@@ -66,7 +66,8 @@ export default {
     },
     cancel(itemKey) {
       this.dialogTableVisible = false
-      this[itemKey] = this.$options.data()[itemKey]
+      const origin = this.$options.data()
+      this[itemKey] = origin[itemKey]
     },
     deleteOneItem(item, index) {
       this.delItem(item.id).then((res) => {

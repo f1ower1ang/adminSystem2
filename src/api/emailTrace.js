@@ -31,7 +31,7 @@ export function deleteRecord(id) {
 
 export function deleteRecords(ids) {
   return request({
-    url: path.emailTrace.delRecord,
+    url: path.emailTrace.delRecords,
     method: 'post',
     data: {
       ids

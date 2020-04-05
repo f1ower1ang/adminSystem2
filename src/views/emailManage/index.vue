@@ -94,7 +94,7 @@
           </el-table-column>
           <el-table-column label="操作" width="210" align="center">
             <template slot-scope="{ row, $index }">
-              <el-button type="primary" size="mini" plain @click="check(row)">查看</el-button>
+              <el-button type="primary" size="mini" plain @click="checkEmail(row)">查看</el-button>
               <el-button type="success" size="mini" plain>记录</el-button>
               <el-button type="danger" size="mini" plain @click="deleteOneItem(row, $index)">删除</el-button>
             </template>
@@ -102,7 +102,7 @@
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="55px" class="common-dialog">
+    <el-dialog :visible.sync="emailDialogTableVisible" :fullscreen="fullscreen" top="55px" class="common-dialog" @close="closeDialog">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>查看邮件</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
@@ -113,17 +113,38 @@
           <template slot-scope="{ row }">
             <div v-if="row.flag">
               <p v-for="(item, index) in row.value" :key="index" style="line-height: 35px">
-                {{ dic.attr[item.attr] }}:{{ item.aptName }}
-                <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">查看</el-button>
+                <template v-if="item.attr">
+                  {{ dic.attr[item.attr] }}:{{ item.aptName }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">查看</el-button>
+                </template>
+                <template v-else>
+                  {{ item.name }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="download(item)">下载</el-button>
+                </template>
               </p>
             </div>
             <div v-else style="white-space: pre-wrap;" v-html="row.value" />
           </template>
         </el-table-column>
       </el-table>
+      <p style="margin: 15px 0">分析记录</p>
+      <div class="comment-wrapper">
+        <ul v-if="commentList.length > 0" class="comment-list">
+          <li v-for="(comment, index) in commentList" :key="index" class="item">
+            <p class="content no-wrap">{{ comment.content }}</p>
+            <p class="username no-wrap">{{ comment.userName }}</p>
+            <p class="time">{{ comment.date.split(' ')[0] }}</p>
+          </li>
+        </ul>
+        <div class="comment-add">
+          <p>添加记录</p>
+          <el-input v-model="content" size="small" />
+          <el-button size="small" type="primary" @click="addComment">添加</el-button>
+        </div>
+      </div>
       <div slot="footer">
-        <el-button size="small" @click="emailDialogTableVisible = false">取 消</el-button>
-        <el-button type="primary" size="small" @click="emailDialogTableVisible = false">确 定</el-button>
+        <el-button size="small" @click="closeDialog">取 消</el-button>
+        <el-button type="primary" size="small" @click="closeDialog">确 定</el-button>
       </div>
     </el-dialog>
     <el-dialog :visible.sync="ruleDialogTableVisible" :fullscreen="ruleFullscreen" top="250px" class="common-dialog">
@@ -132,7 +153,7 @@
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="ruleFullscreen = !ruleFullscreen" />
       </div>
       <el-table :data="rule" border>
-        <el-table-column v-for="(header, index) in dialogHeaders" :key="index" :label="header" :prop="dialogKeys[index]" align="center" :width="dialogWidths[index]" show-overflow-tooltip />
+        <el-table-column v-for="(header, index) in ruleDialogHeaders" :key="index" :label="header" :prop="ruleDialogKeys[index]" align="center" :width="ruleDialogWidths[index]" show-overflow-tooltip />
       </el-table>
       <div slot="footer">
         <el-button size="small" @click="ruleDialogTableVisible = false">取 消</el-button>
@@ -142,9 +163,10 @@
   </div>
 </template>
 <script>
-import { checkRule, deleteEmail, deleteEmails, getEmailList } from '../../api/emailManage'
+import { deleteEmail, deleteEmails, getEmailList } from '../../api/emailManage'
 import { getAptList } from '../../api/ruleManage'
 import CommonMixin from '../common-mixin'
+import ViewEmailMixin from '../view-email-mixin'
 
 export default {
   name: 'Index',
@@ -162,7 +184,7 @@ export default {
       }
     }
   },
-  mixins: [CommonMixin],
+  mixins: [CommonMixin, ViewEmailMixin],
   data() {
     return {
       formData: {
@@ -178,13 +200,6 @@ export default {
       headers: ['ID', '发件邮箱', '发件IP', '邮件标题', '发件日期', '所属组织'],
       keys: ['id', 'fromAdd', 'fromIp', 'subject', 'date', 'aptName', 'trace', 'read'],
       widths: ['70', '', '130', '', '100', '', '', '100'],
-      curData: null,
-      ruleDialogTableVisible: false,
-      rule: null,
-      dialogHeaders: ['规则属性', '规则类型', '匹配源数据', '所属组织', '关联邮件'],
-      dialogKeys: ['attr', 'type', 'value', 'aptName', 'emailId'],
-      dialogWidths: ['100', '100', '', '100', ''],
-      ruleFullscreen: false,
       getItems: getEmailList,
       delItem: deleteEmail,
       delItems: deleteEmails
@@ -198,51 +213,6 @@ export default {
       this.dic.APT.push(res.name)
     })
     this.getTableData()
-  },
-  methods: {
-    check(data) {
-      this.curData = []
-      const keys = ['发件邮箱', '发件IP', '收件邮箱', '发件时间', '邮件标题', '邮件正文', '邮件附件', '分析结果', '添加源数据', '关联邮件']
-      const maps = ['fromAdd', 'fromIp', 'toAdd', 'date', 'subject', 'content', 'attachments']
-      maps.slice(0, 7).forEach((k, index) => {
-        const obj = {
-          key: keys[index],
-          flag: false,
-          value: data[k]
-        }
-        this.curData.push(obj)
-      })
-      this.curData.push({
-        key: keys[7],
-        value: data.trace ? data.trace.rules : '',
-        flag: !!data.trace
-      })
-      let addRule = ''
-      let emailId = ''
-      if (data.trace) {
-        addRule = data.trace.addRule ? '是' : '否'
-        emailId = data.trace.emailId
-      }
-      this.curData.push({
-        key: keys[8],
-        value: addRule,
-        flag: false
-      })
-      this.curData.push({
-        key: keys[9],
-        value: emailId,
-        flag: false
-      })
-      this.emailDialogTableVisible = true
-    },
-    viewRule(rule) {
-      checkRule(rule.id).then((res) => {
-        res.data.attr = this.dic.attr[res.data.attr]
-        res.data.type = this.dic.types[res.data.type]
-        this.rule = [res.data]
-        this.ruleDialogTableVisible = true
-      })
-    }
   }
 }
 </script>

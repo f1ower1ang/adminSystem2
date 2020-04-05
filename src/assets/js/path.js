@@ -1,8 +1,8 @@
 module.exports = {
   user: {
-    login: '/user/login',
-    logout: '/user/logout',
-    info: '/user/getInfo'
+    login: '/login',
+    logout: '/logout',
+    info: '/getInfo'
   },
   dashboard: {
     statistic: '/getStatistics'
@@ -11,10 +11,13 @@ module.exports = {
     emailList: '/email/findAll',
     attachList: '/attachment/findAll',
     deleteEmailByIds: '/email/delMore',
+    oneEmail: '/email/findOne',
     deleteEmailById: '/email/delOne',
     deleteAttachmentById: '/attachment/delOne',
     deleteAttachmentByIds: '/attachment/delMore',
-    checkRule: '/rule/findOne'
+    checkRule: '/rule/findOne',
+    commentList: '/comment/findAll',
+    addComment: '/comment/addOne'
   },
   emailTrace: {
     recordList: '/trace/findAll',
@@ -40,7 +43,8 @@ module.exports = {
     addAPT: '/apts/addOne',
     editAPT: '/apts/editOne',
     deleteAPT: '/apts/delOne',
-    deleteAPTs: '/apts/delMore'
+    deleteAPTs: '/apts/delMore',
+    uploadImg: '/apts/uploadOne'
   },
   userManage: {
     userList: '/user/findAll',

@@ -128,3 +128,14 @@ export function delAPTs(ids) {
     data: { ids }
   })
 }
+
+export function uploadImg(data) {
+  return request({
+    url: path.ruleManage.uploadImg,
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

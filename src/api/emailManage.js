@@ -9,14 +9,6 @@ export function getEmailList(data) {
   })
 }
 
-export function getAttachmentList(data) {
-  return request({
-    url: path.emailManage.attachList,
-    method: 'post',
-    data
-  })
-}
-
 export function deleteEmail(id) {
   return request({
     url: path.emailManage.deleteEmailById,
@@ -33,6 +25,38 @@ export function deleteEmails(ids) {
   })
 }
 
+export function getEmail(id) {
+  return request({
+    url: path.emailManage.oneEmail,
+    method: 'get',
+    params: { id }
+  })
+}
+
+export function getCommentList(data) {
+  return request({
+    url: path.emailManage.commentList,
+    method: 'post',
+    data
+  })
+}
+
+export function addComment(data) {
+  return request({
+    url: path.emailManage.addComment,
+    method: 'post',
+    data
+  })
+}
+
+export function getAttachmentList(data) {
+  return request({
+    url: path.emailManage.attachList,
+    method: 'post',
+    data
+  })
+}
+
 export function deleteAttachment(id) {
   return request({
     url: path.emailManage.deleteAttachmentById,
@@ -43,7 +67,7 @@ export function deleteAttachment(id) {
 
 export function deleteAttachments(ids) {
   return request({
-    url: path.emailManage.deleteAttachmentById,
+    url: path.emailManage.deleteAttachmentByIds,
     method: 'post',
     data: { ids }
   })

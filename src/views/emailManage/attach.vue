@@ -10,13 +10,11 @@
           <el-input v-model="formData.md5" size="small" placeholder="请输入hash" />
         </el-form-item>
         <el-form-item label="所属邮件:">
-          <el-input v-model="formData.emailId" size="small" placeholder="点击选择所属邮件" disabled>
-            <el-button slot="append" icon="el-icon-search" @click="getEmailData" />
+          <el-input v-model="formData.emailId" size="small" placeholder="选择所属邮件" disabled @click.native="getEmailData">
+            <el-button slot="append" icon="el-icon-search" />
           </el-input>
         </el-form-item>
-        <el-form-item>
-          <el-button icon="el-icon-search" type="success" size="small" @click="search">查询</el-button>
-        </el-form-item>
+        <el-button icon="el-icon-search" type="success" size="small" @click="search">查询</el-button>
       </el-row>
     </el-form>
     <div class="attach-page__content">
@@ -45,6 +43,14 @@
             :width="widths[index]"
             :show-overflow-tooltip="true"
           />
+          <el-table-column label="所属邮件" align="center">
+            <template slot-scope="{ row }">
+              <p>
+                <span>{{ row.emailId }}</span>
+                <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="checkEmail(row.emailId)">查看</el-button>
+              </p>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="200" align="center">
             <template slot-scope="{ row, $index }">
               <el-button type="primary" size="mini" plain>下载</el-button>
@@ -54,7 +60,7 @@
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="searchDialog" :fullscreen="searchFullScreen" top="100px" width="50%" class="common-dialog">
+    <el-dialog :visible.sync="searchDialog" :fullscreen="searchFullScreen" top="100px" width="50%" class="common-dialog" @close="closeSearch">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>邮件搜索</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="searchFullScreen = !searchFullScreen" />
@@ -93,16 +99,75 @@
         </el-table>
       </pagination>
     </el-dialog>
+    <el-dialog :visible.sync="ruleDialogTableVisible" :fullscreen="ruleFullscreen" top="250px" class="common-dialog">
+      <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
+        <p>查看依据</p>
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="ruleFullscreen = !ruleFullscreen" />
+      </div>
+      <el-table :data="rule" border>
+        <el-table-column v-for="(header, index) in ruleDialogHeaders" :key="index" :label="header" :prop="ruleDialogKeys[index]" align="center" :width="ruleDialogWidths[index]" show-overflow-tooltip />
+      </el-table>
+      <div slot="footer">
+        <el-button size="small" @click="ruleDialogTableVisible = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="ruleDialogTableVisible = false">确 定</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog :visible.sync="emailDialogTableVisible" :fullscreen="fullscreen" top="55px" class="common-dialog" @close="closeDialog">
+      <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
+        <p>查看邮件</p>
+        <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px" @click="fullscreen = !fullscreen" />
+      </div>
+      <el-table :data="curData" border :show-header="false">
+        <el-table-column property="key" width="150" align="center" />
+        <el-table-column>
+          <template slot-scope="{ row }">
+            <div v-if="row.flag">
+              <p v-for="(item, index) in row.value" :key="index" style="line-height: 35px">
+                <template v-if="item.attr">
+                  {{ dic.attr[item.attr] }}:{{ item.aptName }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">查看</el-button>
+                </template>
+                <template v-else>
+                  {{ item.name }}
+                  <el-button size="mini" type="primary" plain style="padding: 5px 10px; margin-left: 5px;" @click="viewRule(item)">下载</el-button>
+                </template>
+              </p>
+            </div>
+            <div v-else style="white-space: pre-wrap;" v-html="row.value" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <p style="margin: 15px 0">分析记录</p>
+      <div class="comment-wrapper">
+        <ul v-if="commentList.length > 0" class="comment-list">
+          <li v-for="(comment, index) in commentList" :key="index" class="item">
+            <p class="content no-wrap">{{ comment.content }}</p>
+            <p class="username no-wrap">{{ comment.userName }}</p>
+            <p class="time">{{ comment.date.split(' ')[0] }}</p>
+          </li>
+        </ul>
+        <div class="comment-add">
+          <p>添加记录</p>
+          <el-input v-model="content" size="small" />
+          <el-button size="small" type="primary" @click="addComment">添加</el-button>
+        </div>
+      </div>
+      <div slot="footer">
+        <el-button size="small" @click="closeDialog">取 消</el-button>
+        <el-button type="primary" size="small" @click="closeDialog">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { deleteAttachments, deleteAttachment, getAttachmentList, getEmailList } from '../../api/emailManage'
 import CommonMixin from '../common-mixin'
+import ViewEmailMixin from '../view-email-mixin'
 
 export default {
   name: 'Attach',
-  mixins: [CommonMixin],
+  mixins: [CommonMixin, ViewEmailMixin],
   data() {
     return {
       formData: {
@@ -111,7 +176,7 @@ export default {
         emailId: ''
       },
       keys: ['id', 'name', 'size', 'path', 'emailHash', 'emailId'],
-      headers: ['ID', '文件名', '文件大小(KB)', '路径', '哈希', '所属邮件'],
+      headers: ['ID', '文件名', '文件大小(KB)', '路径', '哈希'],
       widths: ['70', '', '120', '', '', ''],
       searchDialog: false,
       searchFullScreen: false,

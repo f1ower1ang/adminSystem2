@@ -63,7 +63,7 @@
         </el-table>
       </pagination>
     </div>
-    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="150px" width="40%" class="common-dialog">
+    <el-dialog :visible.sync="dialogTableVisible" :fullscreen="fullscreen" top="150px" width="40%" class="common-dialog" @close="cancel('accountForm')">
       <div slot="title" style="display: flex; justify-content: space-between; height: 16px; align-items: center">
         <p>{{ dialogTitle }}</p>
         <el-button icon="el-icon-full-screen" type="text" style="margin-right: 30px;" @click="fullscreen = !fullscreen" />
